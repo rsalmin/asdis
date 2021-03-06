@@ -4,6 +4,8 @@ pub fn decode(fmt : &InstructionFmt, v : u32, op: &Opcode) -> Instruction {
     match fmt{
         InstructionFmt::R => decode_r(v, op),
         InstructionFmt::I => decode_i(v, op),
+        InstructionFmt::IC => decode_ic(v, op),
+        InstructionFmt::IF => decode_if(v, op),
         InstructionFmt::S => decode_s(v, op),
         InstructionFmt::SB => decode_sb(v, op),
         InstructionFmt::U => decode_u(v, op),
@@ -29,8 +31,25 @@ fn decode_i(v : u32, op: &Opcode) -> Instruction {
     let rd = Register::new( ( ( v & 0xF80 ) >> 7 ) as u8 );
     let func3 = Func3::new( ( (v & 0x7000) >> 12 ) as u8 );
     let rs1 = Register::new( ( (v & 0xF8000) >> 15 ) as u8 );
-    let imm = ( ( v & 0xFFF00000 ) >> 20 ) as u16; // actually u12
-    Instruction::I {immfunc : ImmFunc::from_imm(imm), rs1, func3, rd,  opcode: *op }
+    let imm = ux::u12::new( ( ( v & 0xFFF00000 ) >> 20 ) as u16);
+    Instruction::I {imm, rs1, func3, rd,  opcode: *op }
+}
+
+fn decode_ic(v : u32, op: &Opcode) -> Instruction {
+    let rd = Register::new( ( ( v & 0xF80 ) >> 7 ) as u8 );
+    let func3 = Func3::new( ( (v & 0x7000) >> 12 ) as u8 );
+    let rs1 = Register::new( ( (v & 0xF8000) >> 15 ) as u8 );
+    let cst = ux::u12::new( ( ( v & 0xFFF00000 ) >> 20 ) as u16 );
+    Instruction::IC {cst, rs1, func3, rd,  opcode: *op }
+}
+
+fn decode_if(v : u32, op: &Opcode) -> Instruction {
+    let rd = Register::new( ( ( v & 0xF80 ) >> 7 ) as u8 );
+    let func3 = Func3::new( ( (v & 0x7000) >> 12 ) as u8 );
+    let rs1 = Register::new( ( (v & 0xF8000) >> 15 ) as u8 );
+    let imm = ux::u5::new( ( ( v & 0x1F00000 ) >> 20 ) as u8);
+    let func7 = Func7::new( ( ( v & 0xFE000000 ) >> 25 ) as u8 );
+    Instruction::IF {func7, imm, rs1, func3, rd,  opcode: *op }
 }
 
 fn decode_s(v : u32, op: &Opcode) -> Instruction {

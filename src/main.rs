@@ -96,14 +96,13 @@ fn i2string(i : &Instruction, isa: &ISAHelper) -> String {
     match i {
             Instruction::R {func7:_, rs2, rs1, func3:_, rd, opcode:_} =>
                 format!("{:8} {}, {}, {}", mn, rd, rs1, rs2),
-            Instruction::I { immfunc, rs1, func3:_, rd, opcode:_} => {
-                match immfunc {
-                    ImmFunc::Imm(v) => format!("{:8} {}, {}, {:#X}", mn, rd, rs1, v),
-                    ImmFunc::FuncImm { func7:_, imm } => format!("{:8} {}, {}, {:#X}", mn, rd, rs1, imm),
-                    ImmFunc::Const(_) => format!("{:8} {}, {}", mn, rd, rs1),
-                }
-                },
-            Instruction::S { imm, rs2, rs1, func3:_, opcode:_} =>
+            Instruction::I { imm, rs1, func3:_, rd, opcode:_} =>
+                format!("{:8} {}, {}, {:#X}", mn, rd, rs1, imm),
+            Instruction::IC { cst:_, rs1, func3:_, rd, opcode:_} =>
+                 format!("{:8} {}, {}", mn, rd, rs1),
+            Instruction::IF { func7:_, imm, rs1, func3:_, rd, opcode:_} =>
+                 format!("{:8} {}, {}, {:#X}", mn, rd, rs1, imm),
+             Instruction::S { imm, rs2, rs1, func3:_, opcode:_} =>
                 format!("{:8} {}, {}, {:#X}", mn, rs1, rs2, imm),
             Instruction::SB { imm, rs2, rs1, func3:_, opcode:_} =>
                 format!("{:8} {}, {}, {:#X}", mn, rs1, rs2, imm),

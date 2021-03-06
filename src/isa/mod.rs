@@ -51,7 +51,7 @@ macro_rules! opdataI {
 macro_rules! opdataI_f {
     ($name:literal, $op:expr, $func3:literal, $func7:literal) => {
         OpcodeData { mnemonic : $name
-                                , fmt : InstructionFmt::I
+                                , fmt : InstructionFmt::IF
                                 , signature : InstructionSignature {opcode : Opcode::new($op)
                                                                                          , func3 : Some(Func3::new($func3))
                                                                                          , func7 : Some(Func7::new($func7))
@@ -63,7 +63,7 @@ macro_rules! opdataI_f {
 macro_rules! opdataI_c {
     ($name:literal, $op:expr, $func3:literal, $cst12:literal) => {
         OpcodeData { mnemonic : $name
-                                , fmt : InstructionFmt::I
+                                , fmt : InstructionFmt::IC
                                 , signature : InstructionSignature {opcode : Opcode::new($op)
                                                                                          , func3 : Some(Func3::new($func3))
                                                                                          , func7 : None
@@ -124,9 +124,12 @@ fn i2signature(i : &Instruction) -> InstructionSignature {
         match i {
             Instruction::R {func7, rs2:_, rs1:_, func3, rd:_, opcode} =>
                 InstructionSignature { opcode: *opcode, func3 : Some(*func3), func7 : Some(*func7), cst12 : None },
-            Instruction::I { immfunc, rs1:_, func3, rd:_, opcode} =>
-                InstructionSignature { opcode: *opcode, func3 : Some(*func3),
-                                                      func7 : immfunc.func7(), cst12 : immfunc.cst12() },
+            Instruction::I { imm:_, rs1:_, func3, rd:_, opcode} =>
+                InstructionSignature { opcode: *opcode, func3 : Some(*func3), func7 : None, cst12 : None },
+            Instruction::IC { cst, rs1:_, func3, rd:_, opcode} =>
+                InstructionSignature { opcode: *opcode, func3 : Some(*func3), func7 : None, cst12 : Some(*cst) },
+            Instruction::IF { func7, imm:_, rs1:_, func3, rd:_, opcode} =>
+                InstructionSignature { opcode: *opcode, func3 : Some(*func3), func7 : Some(*func7), cst12 : None },
             Instruction::S { imm:_, rs2:_, rs1:_, func3, opcode} =>
                 InstructionSignature { opcode: *opcode, func3 : Some(*func3), func7 : None, cst12 : None },
             Instruction::SB { imm:_, rs2:_, rs1:_, func3, opcode} =>

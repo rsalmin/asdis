@@ -72,49 +72,11 @@ impl fmt::Display for Func7 {
     }
 }
 
-pub enum ImmFunc {
-    Imm(ux::u12),
-    FuncImm { func7 : Func7, imm : ux::u5 },
-    Const(ux::u12),
-}
-
-impl ImmFunc {
-    pub fn from_imm(v : u16) -> ImmFunc {
-        ImmFunc::Imm( ux::u12::new(v) )
-    }
-    pub fn from_func_imm( func7 : Func7, v : u8) -> ImmFunc {
-        ImmFunc::FuncImm { func7, imm : ux::u5::new(v) }
-    }
-    pub fn from_const( v : u16 ) -> ImmFunc {
-        ImmFunc::Const( ux::u12::new(v) )
-    }
-    pub fn cst12(&self) -> Option<ux::u12> {
-        match &self {
-            ImmFunc::Const( v ) => Some(*v),
-            _ => None,
-        }
-    }
-    pub fn func7(&self) -> Option<Func7> {
-        match &self {
-            ImmFunc::FuncImm { func7, .. } => Some(*func7),
-            _ => None,
-        }
-    }
-}
-
-impl fmt::Display for ImmFunc {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-         match &self  {
-             ImmFunc::Imm( imm ) => write!(f, "imm: {}",  imm),
-             ImmFunc::FuncImm { func7, imm } => write!(f, "func7: {}, imm: {:#04X}", func7, imm),
-             ImmFunc::Const( imm ) => write!(f, "cst: {}",  imm),
-         }
-    }
-}
-
 pub enum Instruction {
     R { func7 : Func7, rs2 : Register, rs1 : Register, func3 : Func3, rd : Register, opcode : Opcode },
-    I  { immfunc : ImmFunc, rs1 : Register, func3 : Func3, rd : Register, opcode : Opcode },
+    I  { imm : ux::u12, rs1 : Register, func3 : Func3, rd : Register, opcode : Opcode },
+    IC  { cst : ux::u12, rs1 : Register, func3 : Func3, rd : Register, opcode : Opcode },
+    IF  { func7 : Func7, imm : ux::u5, rs1 : Register, func3 : Func3, rd : Register, opcode : Opcode },
     S { imm: ux::u12, rs2: Register, rs1: Register, func3 : Func3, opcode : Opcode },
     SB { imm: ux::u13, rs2: Register, rs1: Register, func3 : Func3, opcode : Opcode },
     U { imm: u32, rd : Register, opcode : Opcode },
@@ -126,8 +88,12 @@ impl fmt::Display for Instruction {
         match self {
             Instruction::R {func7, rs2, rs1, func3, rd, opcode:_} =>
                 write!(f, "fmt: R, func7: {}, rs2: {}, rs1: {}, func3: {}, rd: {}", func7, rs2, rs1, func3, rd),
-            Instruction::I { immfunc, rs1, func3, rd, opcode:_} =>
-                write!(f, "fmt: I, {}, rs1 : {}, func3 : {}, rd : {}", immfunc, rs1, func3, rd),
+            Instruction::I { imm, rs1, func3, rd, opcode:_} =>
+                write!(f, "fmt: I, imm : {}, rs1 : {}, func3 : {}, rd : {}", imm, rs1, func3, rd),
+            Instruction::IC { cst, rs1, func3, rd, opcode:_} =>
+                write!(f, "fmt: Ic, cst : {}, rs1 : {}, func3 : {}, rd : {}", cst, rs1, func3, rd),
+            Instruction::IF { func7, imm , rs1, func3, rd, opcode:_} =>
+                write!(f, "fmt: If, func7 : {}, imm : {}, rs1 : {}, func3 : {}, rd : {}", func7, imm, rs1, func3, rd),
             Instruction::S { imm, rs2, rs1, func3, opcode:_} =>
                 write!(f, "fmt: S, imm: {:#06X}, rs2: {}, rs1: {}, func3: {}", imm, rs2, rs1, func3),
             Instruction::SB { imm, rs2, rs1, func3, opcode:_} =>
@@ -145,8 +111,12 @@ impl fmt::Debug for Instruction {
         match self {
             Instruction::R {func7, rs2, rs1, func3, rd, opcode} =>
                 write!(f, "op: {}, fmt: R, func7: {}, rs2: {}, rs1: {}, func3: {}, rd: {}", opcode, func7, rs2, rs1, func3, rd),
-            Instruction::I { immfunc, rs1, func3, rd, opcode} =>
-                write!(f, "op: {}, fmt: I, {}, rs1 : {}, func3 : {}, rd : {}", opcode, immfunc, rs1, func3, rd),
+            Instruction::I { imm, rs1, func3, rd, opcode} =>
+                write!(f, "op: {}, fmt: I, imm : {}, rs1 : {}, func3 : {}, rd : {}", opcode, imm, rs1, func3, rd),
+            Instruction::IC { cst, rs1, func3, rd, opcode} =>
+                write!(f, "op: {}, fmt: I, cst : {}, rs1 : {}, func3 : {}, rd : {}", opcode, cst, rs1, func3, rd),
+            Instruction::IF { func7, imm, rs1, func3, rd, opcode} =>
+                write!(f, "op: {}, fmt: I, func7 : {}, imm : {}, rs1 : {}, func3 : {}, rd : {}", opcode, func7, imm, rs1, func3, rd),
             Instruction::S { imm, rs2, rs1, func3, opcode} =>
                 write!(f, "op: {}, fmt: S, imm: {:#06X}, rs2: {}, rs1: {}, func3: {}", opcode, imm, rs2, rs1, func3),
             Instruction::SB { imm, rs2, rs1, func3, opcode} =>
@@ -161,5 +131,5 @@ impl fmt::Debug for Instruction {
 
 
 #[derive(PartialEq, Eq, Debug, Clone, Copy)]
-pub enum InstructionFmt { R, I, S, SB, U, UJ }
+pub enum InstructionFmt { R, I, IC, IF, S, SB, U, UJ }
 
