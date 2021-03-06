@@ -2,16 +2,16 @@ use crate::primitives::*;
 
 pub fn decode(fmt : &InstructionFmt, v : u32, op: &Opcode) -> Instruction {
     match fmt{
-        InstructionFmt::R => decodeR(v, op),
-        InstructionFmt::I => decodeI(v, op),
-        InstructionFmt::S => decodeS(v, op),
-        InstructionFmt::SB => decodeSB(v, op),
-        InstructionFmt::U => decodeU(v, op),
-        InstructionFmt::UJ => decodeUJ(v, op),
+        InstructionFmt::R => decode_r(v, op),
+        InstructionFmt::I => decode_i(v, op),
+        InstructionFmt::S => decode_s(v, op),
+        InstructionFmt::SB => decode_sb(v, op),
+        InstructionFmt::U => decode_u(v, op),
+        InstructionFmt::UJ => decode_uj(v, op),
     }
 }
 
-fn decodeR(v : u32, op: &Opcode) -> Instruction {
+fn decode_r(v : u32, op: &Opcode) -> Instruction {
      let v = v >> 7;
      let rd = Register::new( (v & 0x1F) as u8 );
      let v = v >> 5;
@@ -25,7 +25,7 @@ fn decodeR(v : u32, op: &Opcode) -> Instruction {
      Instruction::R { func7, rs2, rs1, func3, rd, opcode: *op }
 }
 
-fn decodeI(v : u32, op: &Opcode) -> Instruction {
+fn decode_i(v : u32, op: &Opcode) -> Instruction {
     let rd = Register::new( ( ( v & 0xF80 ) >> 7 ) as u8 );
     let func3 = Func3::new( ( (v & 0x7000) >> 12 ) as u8 );
     let rs1 = Register::new( ( (v & 0xF8000) >> 15 ) as u8 );
@@ -33,7 +33,7 @@ fn decodeI(v : u32, op: &Opcode) -> Instruction {
     Instruction::I {immfunc : ImmFunc::from_imm(imm), rs1, func3, rd,  opcode: *op }
 }
 
-fn decodeS(v : u32, op: &Opcode) -> Instruction {
+fn decode_s(v : u32, op: &Opcode) -> Instruction {
      let v = v >> 7;
      let bit0to4 = v & 0x1F ;
      let v = v >> 5;
@@ -48,7 +48,7 @@ fn decodeS(v : u32, op: &Opcode) -> Instruction {
      Instruction::S {imm: ux::u12::new(imm), rs2, rs1, func3, opcode: *op}
 }
 
-fn decodeSB(v : u32, op: &Opcode) -> Instruction {
+fn decode_sb(v : u32, op: &Opcode) -> Instruction {
      let v = v >> 7;
      let bit11 = v & 1;
      let v = v >> 1;
@@ -67,13 +67,13 @@ fn decodeSB(v : u32, op: &Opcode) -> Instruction {
      Instruction::SB {imm: ux::u13::new(imm), rs2, rs1, func3, opcode: *op}
 }
 
-fn decodeU(v : u32, op: &Opcode) -> Instruction {
+fn decode_u(v : u32, op: &Opcode) -> Instruction {
     let rd = Register::new( ( ( v & 0xF80 ) >>7 ) as u8 );
     let imm = v & 0xFFFFF000;
     Instruction::U { imm, rd, opcode : *op}
 }
 
-fn decodeUJ(v : u32, op: &Opcode) -> Instruction {
+fn decode_uj(v : u32, op: &Opcode) -> Instruction {
     let rd = Register::new( ( ( v & 0xF80 ) >>7 ) as u8 );
     let v = v >> 12; // remove op and rd
     let bit12to19 =  v &  0xFF ;

@@ -70,7 +70,7 @@ struct Cli {
     start_addr : u32,
 }
 
-fn translate(v : u32, isa : &ISAHelper) -> String {
+fn translate32(v : u32, isa : &ISAHelper) -> String {
     //Note that all ones illegal at least for for RV32I, but may be not illegal for other extensions
     if v as u16 == 0 || v == 0xFFFFFFFF {
         return format!("<illegal>");
@@ -82,6 +82,14 @@ fn translate(v : u32, isa : &ISAHelper) -> String {
     }
 }
 
+fn translate16(v : u16) -> String {
+    //Note that all ones illegal at least for for RV32I, but may be not illegal for other extensions
+    if v == 0 {
+        return format!("<illegal>");
+    }
+
+    return format!("C-format");
+}
 
 fn i2string(i : &Instruction, isa: &ISAHelper) -> String {
     let mn = isa.mnemonic( i );
@@ -121,11 +129,16 @@ fn main() -> std::io::Result<()> {
     for i in idata_stream {
         let i = i?;
         match i {
-            IData::Word( v ) =>  {let dscr = translate(v, &isa);
-                                      println!("{:#010X} {:40} {:#010X?}  ", start_addr, dscr, v);
-                                      start_addr += 4;
-                                     },
-           IData::Half ( v ) => { println!("{:#010X} C-format {:#06X}", start_addr, v); start_addr += 2;}
+            IData::Word( v ) =>  {
+                let dscr = translate32(v, &isa);
+                println!("{:#010X} {:40} {:#010X?}  ", start_addr, dscr, v);
+                start_addr += 4;
+           },
+           IData::Half ( v ) => {
+               let dscr = translate16(v);
+               println!("{:#010X} {:40}     {:#06X}", start_addr, dscr, v);
+               start_addr += 2;
+           },
        }
     }
 
