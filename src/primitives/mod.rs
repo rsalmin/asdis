@@ -1,5 +1,7 @@
 mod primitives;
-mod primitivesc;
+mod instructions;
+mod instructionsc;
 
 pub use primitives::*;
-pub use primitivesc::*;
+pub use instructions::*;
+pub use instructionsc::*;
