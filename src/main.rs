@@ -8,7 +8,7 @@ use primitives::*;
 mod isa;
 use isa::ISAHelper;
 mod decoder;
-use decoder::decode;
+use decoder::{decode, decode16 };
 use std::num::ParseIntError;
 
 enum IData {
@@ -87,6 +87,8 @@ fn translate16(v : u16) -> String {
     if v == 0 {
         return format!("<illegal>");
     }
+    let op = ( ( v & 0xE000 ) >> 11 ) | ( v & 3 );
+    let op = Opcode::new( op as u8 );
 
     return format!("C-format");
 }

@@ -9,3 +9,6 @@ edition = "2018"
 [dependencies]
 structopt = "0.3"
 ux = "0.1"
+
+[lib]
+proc-macro = true
