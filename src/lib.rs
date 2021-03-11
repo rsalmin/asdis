@@ -3,19 +3,30 @@ use std::fmt;
 
 #[derive(Debug)]
 enum Item {
-    Bits {bits : String},
+    Bits {len : usize, val : u16},
     Ident {name:String, bitspec:Vec<u8>},
 }
 
 impl fmt::Display for Item {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Item::Bits { bits } => write!(f, "{}", bits),
+            Item::Bits { len, val } => write!(f, "{:0width$b}", val, width = len),
             Item::Ident {name, bitspec} => write!(f, "{}{:?}", name, bitspec),
         }
     }
 }
 
+
+fn bits_len( v : &Vec<Item> ) -> usize {
+    let mut r : usize = 0;
+    for item in v {
+        match item {
+            Item::Bits {len, .. } => r += len,
+            Item::Ident { name:_ , bitspec } => r += bitspec.len() ,
+        };
+    };
+    r
+}
 
 fn delimiter_string(d : &proc_macro::Delimiter) -> &str {
     match d {
@@ -105,7 +116,17 @@ fn parseTokenString(ts : TokenStream) -> String {
     let mut current = State::Empty;
     let mut r = Vec::<Item>::new();
 
-    for tt in ts {
+    let mut iter = ts.into_iter();
+
+    match iter.next() {
+        None => panic!("Empty token stream!"),
+        Some( tt ) => match tt {
+            TokenTree::Literal(g) => (),
+            _ => panic!("First argument must be a command description"),
+        }
+    }
+
+    for tt in iter {
         match tt {
             TokenTree::Group(g) => {
                 assert!(g.delimiter() == Delimiter::Bracket, "Only [] delimeters allowed for bitspecs");
@@ -130,10 +151,17 @@ fn parseTokenString(ts : TokenStream) -> String {
                 }
             },
             TokenTree::Literal(g) => {
-                r.push( Item::Bits { bits : g.to_string() } );
+                let str = &g.to_string();
+                match u16::from_str_radix(str, 2) {
+                    Err( err ) => panic!("Not a binary string : {}", err),
+                    Ok( val ) => r.push( Item::Bits { len : str.len(), val  } ),
+                }
             },
         }
     }
+
+    let bl = bits_len(&r);
+    assert_eq!(bl, 16);
 
     let mut str = String::new();
     for i in r {
