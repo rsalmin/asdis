@@ -1,21 +1,9 @@
 use proc_macro::{TokenStream, TokenTree, Delimiter};
-use std::fmt;
+use proc_quote::quote;
 
-#[derive(Debug)]
-enum Item {
-    Bits {len : usize, val : u16},
-    Ident {name:String, bitspec:Vec<u8>},
-}
-
-impl fmt::Display for Item {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Item::Bits { len, val } => write!(f, "{:0width$b}", val, width = len),
-            Item::Ident {name, bitspec} => write!(f, "{}{:?}", name, bitspec),
-        }
-    }
-}
-
+mod primitives;
+use primitives::{Item, TextInstruction, BinaryInstruction, Instruction};
+use std::convert::From;
 
 fn bits_len( v : &Vec<Item> ) -> usize {
     let mut r : usize = 0;
@@ -106,7 +94,7 @@ fn parseBitspec(ts : TokenStream) -> Vec::<u8> {
     return bitspec;
 }
 
-fn parseTokenString(ts : TokenStream) -> String {
+fn parseTokenString(ts : TokenStream) -> Instruction {
 
     enum State {
         Empty,
@@ -118,13 +106,14 @@ fn parseTokenString(ts : TokenStream) -> String {
 
     let mut iter = ts.into_iter();
 
-    match iter.next() {
+    let text = match iter.next() {
         None => panic!("Empty token stream!"),
         Some( tt ) => match tt {
-            TokenTree::Literal(g) => (),
+            TokenTree::Literal(g) => g.to_string() ,
             _ => panic!("First argument must be a command description"),
         }
-    }
+    };
+    let text = TextInstruction::from(&text[..]);
 
     for tt in iter {
         match tt {
@@ -163,25 +152,20 @@ fn parseTokenString(ts : TokenStream) -> String {
     let bl = bits_len(&r);
     assert_eq!(bl, 16);
 
-    let mut str = String::new();
-    for i in r {
-        let s = format!("{}", i);
-        str.push_str(&s);
-        str.push_str(" ");
-    }
+    let bin = BinaryInstruction { list : r };
 
-    //panic!("WTF? {:?}", r);
-    str
+    Instruction { bin, text }
 }
 
 #[proc_macro]
 pub fn instruction(items: TokenStream) -> TokenStream {
     let r = parseTokenString(items);
+    TokenStream::from( quote! { "wtf?" } )
 
-    let mut rr = String::from("\"");
-    rr.push_str(&r);
-    rr.push_str("\"");
-    rr.parse().unwrap()
+    //let mut rr = String::from("\"");
+    //rr.push_str(&r);
+    //rr.push_str("\"");
+    //rr.parse().unwrap()
     //"10".parse().unwrap()
 }
 

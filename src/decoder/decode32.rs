@@ -1,19 +1,19 @@
 use crate::primitives::*;
 
-pub fn decode(fmt : &InstructionFmt, v : u32, op: &Opcode) -> Instruction {
+pub fn decode(fmt : &Instruction32Fmt, v : u32, op: &Opcode) -> Instruction32 {
     match fmt{
-        InstructionFmt::R => decode_r(v, op),
-        InstructionFmt::I => decode_i(v, op),
-        InstructionFmt::IC => decode_ic(v, op),
-        InstructionFmt::IF => decode_if(v, op),
-        InstructionFmt::S => decode_s(v, op),
-        InstructionFmt::SB => decode_sb(v, op),
-        InstructionFmt::U => decode_u(v, op),
-        InstructionFmt::UJ => decode_uj(v, op),
+        Instruction32Fmt::R => decode_r(v, op),
+        Instruction32Fmt::I => decode_i(v, op),
+        Instruction32Fmt::IC => decode_ic(v, op),
+        Instruction32Fmt::IF => decode_if(v, op),
+        Instruction32Fmt::S => decode_s(v, op),
+        Instruction32Fmt::SB => decode_sb(v, op),
+        Instruction32Fmt::U => decode_u(v, op),
+        Instruction32Fmt::UJ => decode_uj(v, op),
     }
 }
 
-fn decode_r(v : u32, op: &Opcode) -> Instruction {
+fn decode_r(v : u32, op: &Opcode) -> Instruction32 {
      let v = v >> 7;
      let rd = Register::new( (v & 0x1F) as u8 );
      let v = v >> 5;
@@ -24,35 +24,35 @@ fn decode_r(v : u32, op: &Opcode) -> Instruction {
      let rs2 = Register::new( (v & 0x1F) as u8 );
      let v = v >> 5;
      let func7 = Func7::new( (v & 0x5F ) as u8 );
-     Instruction::R { func7, rs2, rs1, func3, rd, opcode: *op }
+     Instruction32::R { func7, rs2, rs1, func3, rd, opcode: *op }
 }
 
-fn decode_i(v : u32, op: &Opcode) -> Instruction {
+fn decode_i(v : u32, op: &Opcode) -> Instruction32 {
     let rd = Register::new( ( ( v & 0xF80 ) >> 7 ) as u8 );
     let func3 = Func3::new( ( (v & 0x7000) >> 12 ) as u8 );
     let rs1 = Register::new( ( (v & 0xF8000) >> 15 ) as u8 );
     let imm = ux::u12::new( ( ( v & 0xFFF00000 ) >> 20 ) as u16);
-    Instruction::I {imm, rs1, func3, rd,  opcode: *op }
+    Instruction32::I {imm, rs1, func3, rd,  opcode: *op }
 }
 
-fn decode_ic(v : u32, op: &Opcode) -> Instruction {
+fn decode_ic(v : u32, op: &Opcode) -> Instruction32 {
     let rd = Register::new( ( ( v & 0xF80 ) >> 7 ) as u8 );
     let func3 = Func3::new( ( (v & 0x7000) >> 12 ) as u8 );
     let rs1 = Register::new( ( (v & 0xF8000) >> 15 ) as u8 );
     let cst = ux::u12::new( ( ( v & 0xFFF00000 ) >> 20 ) as u16 );
-    Instruction::IC {cst, rs1, func3, rd,  opcode: *op }
+    Instruction32::IC {cst, rs1, func3, rd,  opcode: *op }
 }
 
-fn decode_if(v : u32, op: &Opcode) -> Instruction {
+fn decode_if(v : u32, op: &Opcode) -> Instruction32 {
     let rd = Register::new( ( ( v & 0xF80 ) >> 7 ) as u8 );
     let func3 = Func3::new( ( (v & 0x7000) >> 12 ) as u8 );
     let rs1 = Register::new( ( (v & 0xF8000) >> 15 ) as u8 );
     let imm = ux::u5::new( ( ( v & 0x1F00000 ) >> 20 ) as u8);
     let func7 = Func7::new( ( ( v & 0xFE000000 ) >> 25 ) as u8 );
-    Instruction::IF {func7, imm, rs1, func3, rd,  opcode: *op }
+    Instruction32::IF {func7, imm, rs1, func3, rd,  opcode: *op }
 }
 
-fn decode_s(v : u32, op: &Opcode) -> Instruction {
+fn decode_s(v : u32, op: &Opcode) -> Instruction32 {
      let v = v >> 7;
      let bit0to4 = v & 0x1F ;
      let v = v >> 5;
@@ -64,10 +64,10 @@ fn decode_s(v : u32, op: &Opcode) -> Instruction {
      let v = v >> 5;
      let bit5to11 = v & 0x5F ;
      let imm = ( (bit5to11 << 5) | bit0to4 ) as u16;
-     Instruction::S {imm: ux::u12::new(imm), rs2, rs1, func3, opcode: *op}
+     Instruction32::S {imm: ux::u12::new(imm), rs2, rs1, func3, opcode: *op}
 }
 
-fn decode_sb(v : u32, op: &Opcode) -> Instruction {
+fn decode_sb(v : u32, op: &Opcode) -> Instruction32 {
      let v = v >> 7;
      let bit11 = v & 1;
      let v = v >> 1;
@@ -83,16 +83,16 @@ fn decode_sb(v : u32, op: &Opcode) -> Instruction {
      let v = v >> 6;
      let bit12 = v & 1;
      let imm = ( (bit12 << 12) | (bit11 << 11) | (bit5to10 << 5) | (bit1to4 << 1) ) as u16; // note first 0 bit
-     Instruction::SB {imm: ux::u13::new(imm), rs2, rs1, func3, opcode: *op}
+     Instruction32::SB {imm: ux::u13::new(imm), rs2, rs1, func3, opcode: *op}
 }
 
-fn decode_u(v : u32, op: &Opcode) -> Instruction {
+fn decode_u(v : u32, op: &Opcode) -> Instruction32 {
     let rd = Register::new( ( ( v & 0xF80 ) >>7 ) as u8 );
     let imm = v & 0xFFFFF000;
-    Instruction::U { imm, rd, opcode : *op}
+    Instruction32::U { imm, rd, opcode : *op}
 }
 
-fn decode_uj(v : u32, op: &Opcode) -> Instruction {
+fn decode_uj(v : u32, op: &Opcode) -> Instruction32 {
     let rd = Register::new( ( ( v & 0xF80 ) >>7 ) as u8 );
     let v = v >> 12; // remove op and rd
     let bit12to19 =  v &  0xFF ;
@@ -105,6 +105,6 @@ fn decode_uj(v : u32, op: &Opcode) -> Instruction {
 
     let imm = (bit20 << 20) | (bit12to19 << 12) | (bit11 << 11) | (bit1to10 << 1); // note first bit is 0
 
-    Instruction::UJ { imm : ux::u21::new(imm), rd, opcode : *op}
+    Instruction32::UJ { imm : ux::u21::new(imm), rd, opcode : *op}
 }
 

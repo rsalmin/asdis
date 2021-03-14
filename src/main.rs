@@ -8,7 +8,7 @@ use primitives::*;
 mod isa;
 use isa::ISAHelper;
 mod decoder;
-use decoder::{decode, decode16 };
+use decoder::decode;
 use std::num::ParseIntError;
 
 enum IData {
@@ -93,24 +93,24 @@ fn translate16(v : u16) -> String {
     return format!("C-format");
 }
 
-fn i2string(i : &Instruction, isa: &ISAHelper) -> String {
+fn i2string(i : &Instruction32, isa: &ISAHelper) -> String {
     let mn = isa.mnemonic( i );
     match i {
-            Instruction::R {func7:_, rs2, rs1, func3:_, rd, opcode:_} =>
+            Instruction32::R {func7:_, rs2, rs1, func3:_, rd, opcode:_} =>
                 format!("{:8} {}, {}, {}", mn, rd, rs1, rs2),
-            Instruction::I { imm, rs1, func3:_, rd, opcode:_} =>
+            Instruction32::I { imm, rs1, func3:_, rd, opcode:_} =>
                 format!("{:8} {}, {}, {:#X}", mn, rd, rs1, imm),
-            Instruction::IC { cst:_, rs1, func3:_, rd, opcode:_} =>
+            Instruction32::IC { cst:_, rs1, func3:_, rd, opcode:_} =>
                  format!("{:8} {}, {}", mn, rd, rs1),
-            Instruction::IF { func7:_, imm, rs1, func3:_, rd, opcode:_} =>
+            Instruction32::IF { func7:_, imm, rs1, func3:_, rd, opcode:_} =>
                  format!("{:8} {}, {}, {:#X}", mn, rd, rs1, imm),
-             Instruction::S { imm, rs2, rs1, func3:_, opcode:_} =>
+             Instruction32::S { imm, rs2, rs1, func3:_, opcode:_} =>
                 format!("{:8} {}, {}, {:#X}", mn, rs1, rs2, imm),
-            Instruction::SB { imm, rs2, rs1, func3:_, opcode:_} =>
+            Instruction32::SB { imm, rs2, rs1, func3:_, opcode:_} =>
                 format!("{:8} {}, {}, {:#X}", mn, rs1, rs2, imm),
-            Instruction::U { imm, rd, opcode:_} =>
+            Instruction32::U { imm, rd, opcode:_} =>
                 format!("{:8} {}, {:#X}", mn, rd, imm),
-            Instruction::UJ { imm, rd, opcode:_} =>
+            Instruction32::UJ { imm, rd, opcode:_} =>
                 format!("{:8} {}, {:#X}", mn, rd, imm),
         }
 }
