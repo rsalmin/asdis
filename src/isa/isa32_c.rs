@@ -1,8 +1,8 @@
 use crate::primitives::*;
 
 #[derive(Debug)]
-struct ISARV32C {
-    list : Vec<Instruction>,
+pub struct ISARV32C {
+    pub list : Vec<Instruction>,
 }
 
 impl ISARV32C {
@@ -37,6 +37,8 @@ impl ISARV32C {
             riscv_dis::instruction!("c.jalr rs1", 1001, rs1[4:0], 0000010),
             riscv_dis::instruction!("c.add rd, rs2", 1001, rd[4:0], rs2[4:0], 10),
             riscv_dis::instruction!("c.swsp rs2, imm", 110, imm[5:2|7:6], rs2[4:0], 10),
+
+            riscv_dis::instruction!("<illegal>", 0000000000000000),
        ];
 
         ISARV32C { list }

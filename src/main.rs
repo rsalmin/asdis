@@ -6,9 +6,9 @@ use std::io::prelude::*;
 mod primitives;
 use primitives::*;
 mod isa;
-use isa::ISAHelper;
+use isa::{ISAHelper, ISARV32C};
 mod decoder;
-use decoder::decode;
+use decoder::{decode, decode16};
 use std::num::ParseIntError;
 
 enum IData {
@@ -82,17 +82,6 @@ fn translate32(v : u32, isa : &ISAHelper) -> String {
     }
 }
 
-fn translate16(v : u16) -> String {
-    //Note that all ones illegal at least for for RV32I, but may be not illegal for other extensions
-    if v == 0 {
-        return format!("<illegal>");
-    }
-    let op = ( ( v & 0xE000 ) >> 11 ) | ( v & 3 );
-    let op = Opcode::new( op as u8 );
-
-    return format!("C-format");
-}
-
 fn i2string(i : &Instruction32, isa: &ISAHelper) -> String {
     let mn = isa.mnemonic( i );
     match i {
@@ -119,6 +108,7 @@ fn main() -> std::io::Result<()> {
     let args = Cli::from_args();
 
     let isa = ISAHelper::new();
+    let isa16 = ISARV32C::new();
 
     let file = File::open(&args.file)?;
     let buf_reader = BufReader::new(file);
@@ -136,7 +126,7 @@ fn main() -> std::io::Result<()> {
                 start_addr += 4;
            },
            IData::Half ( v ) => {
-               let dscr = translate16(v);
+               let dscr = decode16(v, &isa16);
                println!("{:#010X} {:40}     {:#06X}", start_addr, dscr, v);
                start_addr += 2;
            },
