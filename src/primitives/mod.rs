@@ -1,5 +1,7 @@
 mod primitives;
-mod instructions;
+mod instruction32;
+mod instruction;
 
 pub use primitives::*;
-pub use instructions::*;
+pub use instruction32::*;
+pub use instruction::*;

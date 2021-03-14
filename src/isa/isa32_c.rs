@@ -1,15 +1,14 @@
-use std::collections::HashMap;
-use std::hash::Hash;
-use ux;
-
 use crate::primitives::*;
 
-struct ISARV32C;
+#[derive(Debug)]
+struct ISARV32C {
+    list : Vec<Instruction>,
+}
 
 impl ISARV32C {
     pub fn new() -> ISARV32C {
 
-        let ilist = [
+        let list = vec! [
             riscv_dis::instruction!("c.addi4spn rd, imm", 000, imm[5:4|9:6|2|3], rd[2:0], 00),
             riscv_dis::instruction!("c.lw rd, rs1, imm", 001, imm[5:3], rs1[2:0], imm[2|6], rd[2:0], 00),
             riscv_dis::instruction!("c.sw rs1, imm (rs2)", 001, imm[5:3], rs1[2:0], imm[2|6], rd[2:0], 00),
@@ -40,7 +39,7 @@ impl ISARV32C {
             riscv_dis::instruction!("c.swsp rs2, imm", 110, imm[5:2|7:6], rs2[4:0], 10),
        ];
 
-        ISARV32C
+        ISARV32C { list }
     }
 }
 
@@ -51,9 +50,8 @@ mod test {
 
     #[test]
     fn ok() {
-        let r = riscv_dis::instruction!("c.addi4spn rd imm", 000, imm[5:4|9:6|2|3], rd[2:0], 00);
-        //let r = riscv_dis::instruction!(000, imm[5:4|9:6|2|3], rd[2:0], 00);
-        println!("{:?}", r);
+        let isa = ISARV32C::new();
+        println!("{:?}", isa);
         assert!(true);
     }
 }
