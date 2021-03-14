@@ -54,4 +54,19 @@ mod test {
         println!("{:?}", isa);
         assert!(true);
     }
+
+    #[test]
+    fn i1() {
+        let i1 = riscv_dis::instruction!("c.nop", 000, imm[5], 00000, imm[4:0], 01);
+        let list = vec![ Item::Bits { len : 3, val : 0 },
+                                 Item::Ident { name : String::from("imm"), bitspec : vec![5] },
+                                 Item::Bits { len : 5, val : 0 },
+                                 Item::Ident { name : String::from("imm"), bitspec : vec![4,3,2,1,0] },
+                                 Item::Bits { len : 2, val : 1 },];
+        let bin = BinaryInstruction { list };
+        let text = TextInstruction { list : vec![ TextInstructionPart::Text(String::from("c.nop")) ] };
+        assert_eq!(i1.text, text);
+        assert_eq!(i1.bin, bin);
+    }
+
 }

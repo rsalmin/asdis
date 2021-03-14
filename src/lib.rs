@@ -113,7 +113,8 @@ fn parseTokenString(ts : TokenStream) -> Instruction {
             _ => panic!("First argument must be a command description"),
         }
     };
-    let text = TextInstruction::from(&text[..]);
+    assert!(text.len() > 2, "Quotes for command description not found");
+    let text = TextInstruction::from(&text[1..text.len() - 1]); //without quotes
 
     for tt in iter {
         match tt {

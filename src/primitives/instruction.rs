@@ -5,7 +5,7 @@ use lazy_static::lazy_static;
 use quote::{quote, ToTokens, TokenStreamExt};
 use proc_macro2::{TokenStream, TokenTree, Ident, Group, Delimiter, Span, Punct, Literal, Spacing};
 
-#[derive(Debug)]
+#[derive(PartialEq, Eq, Debug)]
 pub enum Item {
     Bits {len : usize, val : u16},
     Ident {name:String, bitspec:Vec<u8>},
@@ -69,7 +69,7 @@ impl ToTokens for Item {
     }
 }
 
-#[derive(Debug)]
+#[derive(PartialEq, Eq, Debug)]
 pub struct BinaryInstruction {
     pub list : Vec<Item>,
 }
