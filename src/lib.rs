@@ -1,5 +1,5 @@
 use proc_macro::{TokenStream, TokenTree, Delimiter};
-use proc_quote::quote;
+use quote::quote;
 
 mod primitives;
 use primitives::{Item, TextInstruction, BinaryInstruction, Instruction};
@@ -160,7 +160,7 @@ fn parseTokenString(ts : TokenStream) -> Instruction {
 #[proc_macro]
 pub fn instruction(items: TokenStream) -> TokenStream {
     let r = parseTokenString(items);
-    TokenStream::from( quote! { "wtf?" } )
+    TokenStream::from( quote! { #r } )
 
     //let mut rr = String::from("\"");
     //rr.push_str(&r);

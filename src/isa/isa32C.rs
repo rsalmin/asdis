@@ -53,7 +53,7 @@ mod test {
     fn ok() {
         let r = riscv_dis::instruction!("c.addi4spn rd imm", 000, imm[5:4|9:6|2|3], rd[2:0], 00);
         //let r = riscv_dis::instruction!(000, imm[5:4|9:6|2|3], rd[2:0], 00);
-        println!("{}", r);
+        println!("{:?}", r);
         assert!(true);
     }
 }

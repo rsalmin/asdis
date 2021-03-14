@@ -3,6 +3,8 @@ use std::hash::Hash;
 use std::convert::From;
 use regex::Regex;
 use lazy_static::lazy_static;
+use quote::{quote, ToTokens, TokenStreamExt};
+use proc_macro2::{TokenStream, TokenTree, Ident, Group, Delimiter, Span, Punct, Literal, Spacing};
 
 #[derive(Debug)]
 pub enum Item {
@@ -19,23 +21,107 @@ impl fmt::Display for Item {
     }
 }
 
+
+fn app_string_from(tokens: &mut TokenStream, s : &str) {
+    tokens.append( TokenTree::Ident( Ident::new("String", Span::call_site())) );
+    tokens.append( TokenTree::Punct( Punct::new(':', Spacing::Joint) ) );
+    tokens.append( TokenTree::Punct( Punct::new(':', Spacing::Joint) ) );
+    tokens.append( TokenTree::Ident( Ident::new("from", Span::call_site())) );
+    let mut in_str_group = TokenStream::new();
+    in_str_group.append( TokenTree::Literal( Literal::string(s) ) );
+    tokens.append( TokenTree::Group( Group::new( Delimiter::Parenthesis, in_str_group ) ) );
+}
+
+impl ToTokens for Item {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        tokens.append( TokenTree::Ident( Ident::new("Item", Span::call_site())) );
+        tokens.append( TokenTree::Punct( Punct::new(':', Spacing::Joint) ) );
+        tokens.append( TokenTree::Punct( Punct::new(':', Spacing::Joint) ) );
+        match self {
+            Item::Bits {len, val}  => {
+                tokens.append( TokenTree::Ident( Ident::new("Bits", Span::call_site())) );
+                let mut inside_braces = TokenStream::new();
+                inside_braces.append( TokenTree::Ident( Ident::new("len", Span::call_site())) );
+                inside_braces.append( TokenTree::Punct( Punct::new(':', Spacing::Alone) ) );
+                inside_braces.append( TokenTree::Literal( Literal::usize_suffixed(*len) ) );
+                inside_braces.append( TokenTree::Punct( Punct::new(',', Spacing::Alone) ) );
+                inside_braces.append( TokenTree::Ident( Ident::new("val", Span::call_site())) );
+                inside_braces.append( TokenTree::Punct( Punct::new(':', Spacing::Alone) ) );
+                inside_braces.append( TokenTree::Literal( Literal::u16_suffixed(*val) ) );
+                tokens.append( TokenTree::Group( Group::new( Delimiter::Brace, inside_braces ) ) );
+            },
+            Item::Ident {name, bitspec }=> {
+                tokens.append( TokenTree::Ident( Ident::new("Ident", Span::call_site())) );
+                let mut inside_braces = TokenStream::new();
+                inside_braces.append( TokenTree::Ident( Ident::new("name", Span::call_site())) );
+                inside_braces.append( TokenTree::Punct( Punct::new(':', Spacing::Alone) ) );
+                app_string_from( &mut inside_braces, &name[..] );
+                inside_braces.append( TokenTree::Punct( Punct::new(',', Spacing::Alone) ) );
+                inside_braces.append( TokenTree::Ident( Ident::new("bitspec", Span::call_site())) );
+                inside_braces.append( TokenTree::Punct( Punct::new(':', Spacing::Alone) ) );
+                inside_braces.append( TokenTree::Ident( Ident::new("vec", Span::call_site()) ) );
+                inside_braces.append( TokenTree::Punct( Punct::new('!', Spacing::Joint) ) );
+                let mut item_list = TokenStream::new();
+                item_list.append_separated( bitspec.iter(), Punct::new(',', Spacing::Alone));
+                inside_braces.append( TokenTree::Group( Group::new( Delimiter::Bracket, item_list ) ) );
+                tokens.append( TokenTree::Group( Group::new( Delimiter::Brace, inside_braces ) ) );
+            },
+        };
+    }
+}
+
 #[derive(Debug)]
 pub struct BinaryInstruction {
     pub list : Vec<Item>,
 }
 
-#[derive(Debug)]
-pub struct Instruction {
-    pub bin : BinaryInstruction,
-    pub text : TextInstruction,
+impl ToTokens for BinaryInstruction {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        tokens.append( TokenTree::Ident( Ident::new("BinaryInstruction", Span::call_site()) ) );
+
+        let mut inside_braces = TokenStream::new();
+        inside_braces.append( TokenTree::Ident( Ident::new("list", Span::call_site())) );
+        inside_braces.append( TokenTree::Punct( Punct::new(':', Spacing::Alone) ) );
+        inside_braces.append( TokenTree::Ident( Ident::new("vec", Span::call_site()) ) );
+        inside_braces.append( TokenTree::Punct( Punct::new('!', Spacing::Joint) ) );
+
+        let mut item_list = TokenStream::new();
+        item_list.append_separated( self.list.iter(), Punct::new(',', Spacing::Alone));
+
+        inside_braces.append( TokenTree::Group( Group::new( Delimiter::Bracket, item_list ) ) );
+        tokens.append( TokenTree::Group( Group::new( Delimiter::Brace, inside_braces ) ) );
+    }
+}
+
+#[derive(PartialEq, Eq, Debug)]
+pub enum TextInstructionPart {
+    Text(String),
+    TextIdent(String, String),
 }
 
 
-
-#[derive(PartialEq, Eq, Debug)]
-enum TextInstructionPart {
-    Text(String),
-    TextIdent(String, String),
+impl ToTokens for TextInstructionPart {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        tokens.append( TokenTree::Ident( Ident::new("TextInstructionPart", Span::call_site())) );
+        tokens.append( TokenTree::Punct( Punct::new(':', Spacing::Joint) ) );
+        tokens.append( TokenTree::Punct( Punct::new(':', Spacing::Joint) ) );
+        match self {
+            TextInstructionPart::Text(s) => {
+                tokens.append( TokenTree::Ident( Ident::new("Text", Span::call_site())) );
+                let mut string = TokenStream::new();
+                app_string_from(&mut string, &s[..]);
+                tokens.append( TokenTree::Group( Group::new( Delimiter::Parenthesis, string ) ) );
+            },
+            TextInstructionPart::TextIdent(s1, s2) => {
+                tokens.append( TokenTree::Ident( Ident::new("TextIdent", Span::call_site())) );
+                let mut strings = TokenStream::new();
+                app_string_from(&mut strings, &s1[..]);
+                strings.append( TokenTree::Punct( Punct::new(',', Spacing::Alone) ) );
+                app_string_from(&mut strings, &s2[..]);
+                tokens.append( TokenTree::Group( Group::new( Delimiter::Parenthesis, strings ) ) );
+            }
+        }
+    }
 }
 
 impl TextInstructionPart {
@@ -49,7 +135,7 @@ impl TextInstructionPart {
 
 #[derive(PartialEq, Eq, Debug)]
 pub struct TextInstruction {
-   list : Vec<TextInstructionPart>,
+   pub list : Vec<TextInstructionPart>,
 }
 
 impl From<&str> for TextInstruction {
@@ -94,6 +180,40 @@ impl From<&str> for TextInstruction {
         TextInstruction { list }
     }
 }
+
+impl ToTokens for TextInstruction {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        tokens.append( TokenTree::Ident( Ident::new("TextInstruction", Span::call_site())) );
+        let mut inside_braces = TokenStream::new();
+        inside_braces.append( TokenTree::Ident( Ident::new("list", Span::call_site())) );
+        inside_braces.append( TokenTree::Punct( Punct::new(':', Spacing::Alone) ) );
+        inside_braces.append( TokenTree::Ident( Ident::new("vec", Span::call_site()) ) );
+        inside_braces.append( TokenTree::Punct( Punct::new('!', Spacing::Joint) ) );
+        let mut item_list = TokenStream::new();
+        item_list.append_separated( self.list.iter(), Punct::new(',', Spacing::Alone));
+        inside_braces.append( TokenTree::Group( Group::new( Delimiter::Bracket, item_list ) ) );
+        tokens.append( TokenTree::Group( Group::new( Delimiter::Brace, inside_braces ) ) );
+    }
+}
+
+#[derive(Debug)]
+pub struct Instruction {
+    pub bin : BinaryInstruction,
+    pub text : TextInstruction,
+}
+
+impl ToTokens for Instruction {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        let t1 = &self.bin;
+        let t2 = &self.text;
+        let tks = quote! {
+            Instruction { bin : #t1,  text : #t2 }
+        };
+        tokens.extend(tks);
+    }
+}
+
+
 
 macro_rules! make_u_type {
     ($name:ident, $bits:literal) => {
