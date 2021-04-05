@@ -12,8 +12,8 @@ impl ISARV32C {
 
         let list = vec! [
             riscv_dis::instruction!("c.addi4spn rd, imm", 000, imm[5:4|9:6|2|3], rd[2:0], 00),
-            riscv_dis::instruction!("c.lw rd, rs1, imm", 001, imm[5:3], rs1[2:0], imm[2|6], rd[2:0], 00),
-            riscv_dis::instruction!("c.sw rs1, imm (rs2)", 001, imm[5:3], rs1[2:0], imm[2|6], rd[2:0], 00),
+            riscv_dis::instruction!("c.lw rd, rs1, imm", 010, imm[5:3], rs1[2:0], imm[2|6], rd[2:0], 00),
+            riscv_dis::instruction!("c.sw rs1, imm (rs2)", 110, imm[5:3], rs1[2:0], imm[2|6], rd[2:0], 00),
             riscv_dis::instruction!("c.nop", 000, imm[5], 00000, imm[4:0], 01),
             riscv_dis::instruction!("c.addi rd, imm", 000, imm[5], rd[4:0], imm[4:0], 01),
             riscv_dis::instruction!("c.jal imm", 001, imm[11|4|9:8|10|6|7|3:1|5], 01),
@@ -29,7 +29,7 @@ impl ISARV32C {
             riscv_dis::instruction!("c.and rd, rs2", 100011, rd[2:0], 11, rs2[2:0], 01),
             riscv_dis::instruction!("c.j imm", 101, imm[11|4|9:8|10|6|7|3:1|5], 01),
             riscv_dis::instruction!("c.beqz rs1, imm", 110, imm[8|4:3], rs1[2:0], imm[7:6|2:1|5], 01),
-            riscv_dis::instruction!("c.bnez rs1, imm", 110, imm[8|4:3], rs1[2:0], imm[7:6|2:1|5], 01),
+            riscv_dis::instruction!("c.bnez rs1, imm", 111, imm[8|4:3], rs1[2:0], imm[7:6|2:1|5], 01),
 
             riscv_dis::instruction!("c.slli rd, imm", 000, imm[5], rd[4:0], imm[4:0], 10),
             riscv_dis::instruction!("c.lwsp rd, imm", 010, imm[5], rd[4:0], imm[4:2|7:6], 10),
