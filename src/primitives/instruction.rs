@@ -5,6 +5,7 @@ use lazy_static::lazy_static;
 use quote::{quote, ToTokens, TokenStreamExt};
 use proc_macro2::{TokenStream, TokenTree, Ident, Group, Delimiter, Span, Punct, Literal, Spacing};
 
+/// Item represents part of binary encoded instruction, it is either just bits, or ident with bit sepcification
 #[derive(PartialEq, Eq, Debug)]
 pub enum Item {
     Bits {len : usize, val : u16},
@@ -21,6 +22,8 @@ impl fmt::Display for Item {
 }
 
 
+
+///helper function, to append given string as String in TokenStream
 fn app_string_from(tokens: &mut TokenStream, s : &str) {
     tokens.append( TokenTree::Ident( Ident::new("String", Span::call_site())) );
     tokens.append( TokenTree::Punct( Punct::new(':', Spacing::Joint) ) );
@@ -69,6 +72,8 @@ impl ToTokens for Item {
     }
 }
 
+
+/// Binary Instruction represents description of instruction binary representation, it consists of list of Items
 #[derive(PartialEq, Eq, Debug)]
 pub struct BinaryInstruction {
     pub list : Vec<Item>,
@@ -92,6 +97,8 @@ impl ToTokens for BinaryInstruction {
     }
 }
 
+
+///Text instruction part is represent part of textual description of instruction, it either just text, or text followed by some variable name
 #[derive(PartialEq, Eq, Debug)]
 pub enum TextInstructionPart {
     Text(String),
@@ -140,6 +147,7 @@ pub struct TextInstruction {
 impl From<&str> for TextInstruction {
     fn from(text : &str) -> TextInstruction {
         lazy_static! {
+            /// asm ident must start with a letter, then letter, number of '.' any number of times
             static ref  RE : Regex = Regex::new(r"[[:alpha:]]([[:alnum:]]|\.)*").unwrap();
         }
         enum State<'a> {
@@ -202,6 +210,7 @@ impl ToTokens for TextInstruction {
     }
 }
 
+///full description of instruction, binary part for processor and textual representation for human
 #[derive(Debug)]
 pub struct Instruction {
     pub bin : BinaryInstruction,

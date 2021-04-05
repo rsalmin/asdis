@@ -16,16 +16,16 @@ fn bits_len( v : &Vec<Item> ) -> usize {
     r
 }
 
-fn delimiter_string(d : &proc_macro::Delimiter) -> &str {
-    match d {
-        Delimiter::Parenthesis => "()",
-        Delimiter::Brace => "{}",
-        Delimiter::Bracket => "[]",
-        Delimiter::None => "NONE",
-    }
-}
+//fn delimiter_string(d : &proc_macro::Delimiter) -> &str {
+//    match d {
+//        Delimiter::Parenthesis => "()",
+//        Delimiter::Brace => "{}",
+//        Delimiter::Bracket => "[]",
+//        Delimiter::None => "NONE",
+//    }
+//}
 
-fn parseBitspec(ts : TokenStream) -> Vec::<u8> {
+fn parse_bitspec(ts : TokenStream) -> Vec::<u8> {
 
     enum State {
         None,
@@ -94,7 +94,7 @@ fn parseBitspec(ts : TokenStream) -> Vec::<u8> {
     return bitspec;
 }
 
-fn parseTokenString(ts : TokenStream) -> Instruction {
+fn parse_token_string(ts : TokenStream) -> Instruction {
 
     enum State {
         Empty,
@@ -122,7 +122,7 @@ fn parseTokenString(ts : TokenStream) -> Instruction {
                 assert!(g.delimiter() == Delimiter::Bracket, "Only [] delimeters allowed for bitspecs");
                 match current {
                     State::Ident( idnt ) => {
-                        let bs = parseBitspec( g.stream() );
+                        let bs = parse_bitspec( g.stream() );
                         r.push( Item::Ident { name : idnt, bitspec : bs } );
                         current = State::Empty;
                     }
@@ -160,7 +160,7 @@ fn parseTokenString(ts : TokenStream) -> Instruction {
 
 #[proc_macro]
 pub fn instruction(items: TokenStream) -> TokenStream {
-    let r = parseTokenString(items);
+    let r = parse_token_string(items);
     TokenStream::from( quote! { #r } )
 
     //let mut rr = String::from("\"");

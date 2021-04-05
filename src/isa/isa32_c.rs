@@ -1,5 +1,7 @@
 use crate::primitives::*;
 
+
+///RV32C instructions subset
 #[derive(Debug)]
 pub struct ISARV32C {
     pub list : Vec<Instruction>,

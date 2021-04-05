@@ -1,6 +1,7 @@
 use crate::primitives::*;
 use crate::isa::*;
 
+/// decode given word(u16) using instruction list, returns text description of instruction
 pub fn decode16(v : u16, isa : &ISARV32C) -> String {
     for i in &isa.list {
         if let Some( s ) = try_instruction(v, &i)  {
@@ -10,6 +11,8 @@ pub fn decode16(v : u16, isa : &ISARV32C) -> String {
     String::from("c. Not Found!")
 }
 
+
+/// checks if given word(u16) is encode given binary instruction
 fn check16( v : u16, instr : &BinaryInstruction) -> bool {
     let mut mask : u16 = 0;
     let mut pattern : u16 = 0;
@@ -33,6 +36,8 @@ fn check16( v : u16, instr : &BinaryInstruction) -> bool {
     v & mask == pattern
 }
 
+/// try to find corespondence between given word and given instruction,
+/// if found return text description of instruction, otherwise None
 pub fn try_instruction( v : u16, i : &Instruction ) -> Option<String> {
     if !check16(v, &i.bin) {
         return None;

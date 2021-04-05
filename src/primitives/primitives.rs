@@ -27,9 +27,3 @@ make_u_type!(Opcode, 7);
 make_u_type!(Func3, 3);
 make_u_type!(Register, 5);
 make_u_type!(Func7, 7);
-
-make_u_type!(OpcodeC, 2);
-make_u_type!(Func2, 2);
-make_u_type!(Func4, 4);
-make_u_type!(Func6, 6);
-make_u_type!(Register3, 3);
