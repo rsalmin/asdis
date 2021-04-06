@@ -6,9 +6,9 @@ use std::io::prelude::*;
 mod primitives;
 use primitives::*;
 mod isa;
-use isa::ISAHelper;
+use isa::{ISAHelper, ISARV32C};
 mod decoder;
-use decoder::decode;
+use decoder::{decode, decode16};
 use std::num::ParseIntError;
 
 enum IData {
@@ -82,33 +82,24 @@ fn translate32(v : u32, isa : &ISAHelper) -> String {
     }
 }
 
-fn translate16(v : u16) -> String {
-    //Note that all ones illegal at least for for RV32I, but may be not illegal for other extensions
-    if v == 0 {
-        return format!("<illegal>");
-    }
-
-    return format!("C-format");
-}
-
-fn i2string(i : &Instruction, isa: &ISAHelper) -> String {
+fn i2string(i : &Instruction32, isa: &ISAHelper) -> String {
     let mn = isa.mnemonic( i );
     match i {
-            Instruction::R {func7:_, rs2, rs1, func3:_, rd, opcode:_} =>
+            Instruction32::R {func7:_, rs2, rs1, func3:_, rd, opcode:_} =>
                 format!("{:8} {}, {}, {}", mn, rd, rs1, rs2),
-            Instruction::I { imm, rs1, func3:_, rd, opcode:_} =>
+            Instruction32::I { imm, rs1, func3:_, rd, opcode:_} =>
                 format!("{:8} {}, {}, {:#X}", mn, rd, rs1, imm),
-            Instruction::IC { cst:_, rs1, func3:_, rd, opcode:_} =>
+            Instruction32::IC { cst:_, rs1, func3:_, rd, opcode:_} =>
                  format!("{:8} {}, {}", mn, rd, rs1),
-            Instruction::IF { func7:_, imm, rs1, func3:_, rd, opcode:_} =>
+            Instruction32::IF { func7:_, imm, rs1, func3:_, rd, opcode:_} =>
                  format!("{:8} {}, {}, {:#X}", mn, rd, rs1, imm),
-             Instruction::S { imm, rs2, rs1, func3:_, opcode:_} =>
+             Instruction32::S { imm, rs2, rs1, func3:_, opcode:_} =>
                 format!("{:8} {}, {}, {:#X}", mn, rs1, rs2, imm),
-            Instruction::SB { imm, rs2, rs1, func3:_, opcode:_} =>
+            Instruction32::SB { imm, rs2, rs1, func3:_, opcode:_} =>
                 format!("{:8} {}, {}, {:#X}", mn, rs1, rs2, imm),
-            Instruction::U { imm, rd, opcode:_} =>
+            Instruction32::U { imm, rd, opcode:_} =>
                 format!("{:8} {}, {:#X}", mn, rd, imm),
-            Instruction::UJ { imm, rd, opcode:_} =>
+            Instruction32::UJ { imm, rd, opcode:_} =>
                 format!("{:8} {}, {:#X}", mn, rd, imm),
         }
 }
@@ -117,6 +108,7 @@ fn main() -> std::io::Result<()> {
     let args = Cli::from_args();
 
     let isa = ISAHelper::new();
+    let isa16 = ISARV32C::new();
 
     let file = File::open(&args.file)?;
     let buf_reader = BufReader::new(file);
@@ -134,7 +126,7 @@ fn main() -> std::io::Result<()> {
                 start_addr += 4;
            },
            IData::Half ( v ) => {
-               let dscr = translate16(v);
+               let dscr = decode16(v, &isa16);
                println!("{:#010X} {:40}     {:#06X}", start_addr, dscr, v);
                start_addr += 2;
            },

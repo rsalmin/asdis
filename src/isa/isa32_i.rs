@@ -5,7 +5,7 @@ use ux;
 use crate::primitives::*;
 
 #[derive(PartialEq, Eq, Hash, Clone)]
-struct InstructionSignature {
+struct Instruction32Signature {
     opcode: Opcode,
     func3 : Option<Func3>,
     func7 : Option<Func7>,
@@ -14,21 +14,21 @@ struct InstructionSignature {
 
 struct OpcodeData {
     mnemonic : &'static str,
-    fmt : InstructionFmt,
-    signature : InstructionSignature,
+    fmt : Instruction32Fmt,
+    signature : Instruction32Signature,
 }
 
 pub struct ISAHelper {
     opdata : Vec<OpcodeData>,
-    pub op2fmt : HashMap::<Opcode, InstructionFmt>,
-    signature2mnemonic : HashMap::<InstructionSignature, &'static str>,
+    pub op2fmt : HashMap::<Opcode, Instruction32Fmt>,
+    signature2mnemonic : HashMap::<Instruction32Signature, &'static str>,
 }
 
 macro_rules! opdataR {
     ($name:literal, $op:expr, $func3:literal, $func7:literal) => {
         OpcodeData { mnemonic : $name
-                                , fmt : InstructionFmt::R
-                                , signature : InstructionSignature {opcode : Opcode::new($op)
+                                , fmt : Instruction32Fmt::R
+                                , signature : Instruction32Signature {opcode : Opcode::new($op)
                                                                                          , func3 : Some(Func3::new($func3))
                                                                                          , func7 : Some(Func7::new($func7))
                                                                                          , cst12 : None }
@@ -39,8 +39,8 @@ macro_rules! opdataR {
 macro_rules! opdataI {
     ($name:literal, $op:expr, $func3:expr) => {
         OpcodeData { mnemonic : $name
-                                , fmt : InstructionFmt::I
-                                , signature : InstructionSignature {opcode : Opcode::new($op)
+                                , fmt : Instruction32Fmt::I
+                                , signature : Instruction32Signature {opcode : Opcode::new($op)
                                                                                          , func3 : Some(Func3::new($func3))
                                                                                          , func7 : None
                                                                                          , cst12 : None }
@@ -51,8 +51,8 @@ macro_rules! opdataI {
 macro_rules! opdataI_f {
     ($name:literal, $op:expr, $func3:literal, $func7:literal) => {
         OpcodeData { mnemonic : $name
-                                , fmt : InstructionFmt::IF
-                                , signature : InstructionSignature {opcode : Opcode::new($op)
+                                , fmt : Instruction32Fmt::IF
+                                , signature : Instruction32Signature {opcode : Opcode::new($op)
                                                                                          , func3 : Some(Func3::new($func3))
                                                                                          , func7 : Some(Func7::new($func7))
                                                                                          , cst12 : None }
@@ -63,8 +63,8 @@ macro_rules! opdataI_f {
 macro_rules! opdataI_c {
     ($name:literal, $op:expr, $func3:literal, $cst12:literal) => {
         OpcodeData { mnemonic : $name
-                                , fmt : InstructionFmt::IC
-                                , signature : InstructionSignature {opcode : Opcode::new($op)
+                                , fmt : Instruction32Fmt::IC
+                                , signature : Instruction32Signature {opcode : Opcode::new($op)
                                                                                          , func3 : Some(Func3::new($func3))
                                                                                          , func7 : None
                                                                                          , cst12 : Some(ux::u12::new($cst12)) }
@@ -75,8 +75,8 @@ macro_rules! opdataI_c {
 macro_rules! opdataS {
     ($name:literal, $op:expr, $func3:literal) => {
         OpcodeData { mnemonic : $name
-                                , fmt : InstructionFmt::S
-                                , signature : InstructionSignature {opcode : Opcode::new($op)
+                                , fmt : Instruction32Fmt::S
+                                , signature : Instruction32Signature {opcode : Opcode::new($op)
                                                                                          , func3 : Some(Func3::new($func3))
                                                                                          , func7 : None
                                                                                          , cst12 : None }
@@ -87,8 +87,8 @@ macro_rules! opdataS {
 macro_rules! opdataSB {
     ($name:literal, $op:expr, $func3:expr) => {
         OpcodeData { mnemonic : $name
-                                , fmt : InstructionFmt::SB
-                                , signature : InstructionSignature {opcode : Opcode::new($op)
+                                , fmt : Instruction32Fmt::SB
+                                , signature : Instruction32Signature {opcode : Opcode::new($op)
                                                                                          , func3 : Some(Func3::new($func3))
                                                                                          , func7 : None
                                                                                          , cst12 : None }
@@ -99,8 +99,8 @@ macro_rules! opdataSB {
 macro_rules! opdataU {
     ($name:literal, $op:expr) => {
         OpcodeData { mnemonic : $name
-                                , fmt : InstructionFmt::U
-                                , signature : InstructionSignature {opcode : Opcode::new($op)
+                                , fmt : Instruction32Fmt::U
+                                , signature : Instruction32Signature {opcode : Opcode::new($op)
                                                                                          , func3 : None
                                                                                          , func7 : None
                                                                                          , cst12 : None }
@@ -111,8 +111,8 @@ macro_rules! opdataU {
 macro_rules! opdataUJ {
     ($name:literal, $op:expr) => {
         OpcodeData { mnemonic : $name
-                                , fmt : InstructionFmt::UJ
-                                , signature : InstructionSignature {opcode : Opcode::new($op)
+                                , fmt : Instruction32Fmt::UJ
+                                , signature : Instruction32Signature {opcode : Opcode::new($op)
                                                                                          , func3 : None
                                                                                          , func7 : None
                                                                                          , cst12 : None }
@@ -120,24 +120,24 @@ macro_rules! opdataUJ {
     };
 }
 
-fn i2signature(i : &Instruction) -> InstructionSignature {
+fn i2signature(i : &Instruction32) -> Instruction32Signature {
         match i {
-            Instruction::R {func7, rs2:_, rs1:_, func3, rd:_, opcode} =>
-                InstructionSignature { opcode: *opcode, func3 : Some(*func3), func7 : Some(*func7), cst12 : None },
-            Instruction::I { imm:_, rs1:_, func3, rd:_, opcode} =>
-                InstructionSignature { opcode: *opcode, func3 : Some(*func3), func7 : None, cst12 : None },
-            Instruction::IC { cst, rs1:_, func3, rd:_, opcode} =>
-                InstructionSignature { opcode: *opcode, func3 : Some(*func3), func7 : None, cst12 : Some(*cst) },
-            Instruction::IF { func7, imm:_, rs1:_, func3, rd:_, opcode} =>
-                InstructionSignature { opcode: *opcode, func3 : Some(*func3), func7 : Some(*func7), cst12 : None },
-            Instruction::S { imm:_, rs2:_, rs1:_, func3, opcode} =>
-                InstructionSignature { opcode: *opcode, func3 : Some(*func3), func7 : None, cst12 : None },
-            Instruction::SB { imm:_, rs2:_, rs1:_, func3, opcode} =>
-                InstructionSignature { opcode: *opcode, func3 : Some(*func3), func7 : None, cst12 : None },
-            Instruction::U { imm:_, rd:_, opcode} =>
-                InstructionSignature { opcode: *opcode, func3 : None, func7 : None, cst12 : None },
-            Instruction::UJ { imm:_, rd:_, opcode} =>
-                InstructionSignature { opcode: *opcode, func3 : None, func7 : None, cst12 : None },
+            Instruction32::R {func7, rs2:_, rs1:_, func3, rd:_, opcode} =>
+                Instruction32Signature { opcode: *opcode, func3 : Some(*func3), func7 : Some(*func7), cst12 : None },
+            Instruction32::I { imm:_, rs1:_, func3, rd:_, opcode} =>
+                Instruction32Signature { opcode: *opcode, func3 : Some(*func3), func7 : None, cst12 : None },
+            Instruction32::IC { cst, rs1:_, func3, rd:_, opcode} =>
+                Instruction32Signature { opcode: *opcode, func3 : Some(*func3), func7 : None, cst12 : Some(*cst) },
+            Instruction32::IF { func7, imm:_, rs1:_, func3, rd:_, opcode} =>
+                Instruction32Signature { opcode: *opcode, func3 : Some(*func3), func7 : Some(*func7), cst12 : None },
+            Instruction32::S { imm:_, rs2:_, rs1:_, func3, opcode} =>
+                Instruction32Signature { opcode: *opcode, func3 : Some(*func3), func7 : None, cst12 : None },
+            Instruction32::SB { imm:_, rs2:_, rs1:_, func3, opcode} =>
+                Instruction32Signature { opcode: *opcode, func3 : Some(*func3), func7 : None, cst12 : None },
+            Instruction32::U { imm:_, rd:_, opcode} =>
+                Instruction32Signature { opcode: *opcode, func3 : None, func7 : None, cst12 : None },
+            Instruction32::UJ { imm:_, rd:_, opcode} =>
+                Instruction32Signature { opcode: *opcode, func3 : None, func7 : None, cst12 : None },
         }
 }
 
@@ -208,8 +208,8 @@ impl ISAHelper {
                                  ];
 
         println!("ISA has {} instructions", opdata.len());
-        let mut op2fmt = HashMap::<Opcode, InstructionFmt>::new();
-        let mut signature2mnemonic = HashMap::<InstructionSignature, &str>::new();
+        let mut op2fmt = HashMap::<Opcode, Instruction32Fmt>::new();
+        let mut signature2mnemonic = HashMap::<Instruction32Signature, &str>::new();
         for elt in &opdata{
             op2fmt.insert(elt.signature.opcode, elt.fmt);
             signature2mnemonic.insert(elt.signature.clone(), elt.mnemonic);
@@ -217,7 +217,7 @@ impl ISAHelper {
         ISAHelper {opdata, op2fmt, signature2mnemonic}
     }
 
-    pub fn mnemonic(&self, i : &Instruction) -> String {
+    pub fn mnemonic(&self, i : &Instruction32) -> String {
         let sign = i2signature(i);
         match self.signature2mnemonic.get( &sign ) {
             Some ( s ) => String::from(*s),

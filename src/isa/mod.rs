@@ -1,5 +1,5 @@
-mod isa32I;
-mod isa32C;
+mod isa32_i;
+mod isa32_c;
 
-pub use isa32I::*;
-pub use isa32C::*;
+pub use isa32_i::*;
+pub use isa32_c::*;

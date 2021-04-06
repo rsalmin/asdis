@@ -3,7 +3,7 @@ use std::fmt;
 
 use super::primitives::*;
 
-pub enum Instruction {
+pub enum Instruction32 {
     R { func7 : Func7, rs2 : Register, rs1 : Register, func3 : Func3, rd : Register, opcode : Opcode },
     I  { imm : ux::u12, rs1 : Register, func3 : Func3, rd : Register, opcode : Opcode },
     IC  { cst : ux::u12, rs1 : Register, func3 : Func3, rd : Register, opcode : Opcode },
@@ -14,47 +14,47 @@ pub enum Instruction {
     UJ { imm: ux::u21, rd : Register, opcode : Opcode },
 }
 
-impl fmt::Display for Instruction {
+impl fmt::Display for Instruction32 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Instruction::R {func7, rs2, rs1, func3, rd, opcode:_} =>
+            Instruction32::R {func7, rs2, rs1, func3, rd, opcode:_} =>
                 write!(f, "fmt: R, func7: {}, rs2: {}, rs1: {}, func3: {}, rd: {}", func7, rs2, rs1, func3, rd),
-            Instruction::I { imm, rs1, func3, rd, opcode:_} =>
+            Instruction32::I { imm, rs1, func3, rd, opcode:_} =>
                 write!(f, "fmt: I, imm : {}, rs1 : {}, func3 : {}, rd : {}", imm, rs1, func3, rd),
-            Instruction::IC { cst, rs1, func3, rd, opcode:_} =>
+            Instruction32::IC { cst, rs1, func3, rd, opcode:_} =>
                 write!(f, "fmt: Ic, cst : {}, rs1 : {}, func3 : {}, rd : {}", cst, rs1, func3, rd),
-            Instruction::IF { func7, imm , rs1, func3, rd, opcode:_} =>
+            Instruction32::IF { func7, imm , rs1, func3, rd, opcode:_} =>
                 write!(f, "fmt: If, func7 : {}, imm : {}, rs1 : {}, func3 : {}, rd : {}", func7, imm, rs1, func3, rd),
-            Instruction::S { imm, rs2, rs1, func3, opcode:_} =>
+            Instruction32::S { imm, rs2, rs1, func3, opcode:_} =>
                 write!(f, "fmt: S, imm: {:#06X}, rs2: {}, rs1: {}, func3: {}", imm, rs2, rs1, func3),
-            Instruction::SB { imm, rs2, rs1, func3, opcode:_} =>
+            Instruction32::SB { imm, rs2, rs1, func3, opcode:_} =>
                 write!(f, "fmt: S, imm: {:#06X}, rs2: {}, rs1: {}, func3: {}", imm, rs2, rs1, func3),
-            Instruction::U { imm, rd, opcode:_} =>
+            Instruction32::U { imm, rd, opcode:_} =>
                 write!(f, "fmt: U, imm: {:#010X}, rd : {}", imm, rd),
-            Instruction::UJ { imm, rd, opcode:_} =>
+            Instruction32::UJ { imm, rd, opcode:_} =>
                 write!(f, "fmt: U, imm: {:#010X}, rd : {}", imm, rd),
         }
     }
 }
 
-impl fmt::Debug for Instruction {
+impl fmt::Debug for Instruction32 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Instruction::R {func7, rs2, rs1, func3, rd, opcode} =>
+            Instruction32::R {func7, rs2, rs1, func3, rd, opcode} =>
                 write!(f, "op: {}, fmt: R, func7: {}, rs2: {}, rs1: {}, func3: {}, rd: {}", opcode, func7, rs2, rs1, func3, rd),
-            Instruction::I { imm, rs1, func3, rd, opcode} =>
+            Instruction32::I { imm, rs1, func3, rd, opcode} =>
                 write!(f, "op: {}, fmt: I, imm : {}, rs1 : {}, func3 : {}, rd : {}", opcode, imm, rs1, func3, rd),
-            Instruction::IC { cst, rs1, func3, rd, opcode} =>
+            Instruction32::IC { cst, rs1, func3, rd, opcode} =>
                 write!(f, "op: {}, fmt: I, cst : {}, rs1 : {}, func3 : {}, rd : {}", opcode, cst, rs1, func3, rd),
-            Instruction::IF { func7, imm, rs1, func3, rd, opcode} =>
+            Instruction32::IF { func7, imm, rs1, func3, rd, opcode} =>
                 write!(f, "op: {}, fmt: I, func7 : {}, imm : {}, rs1 : {}, func3 : {}, rd : {}", opcode, func7, imm, rs1, func3, rd),
-            Instruction::S { imm, rs2, rs1, func3, opcode} =>
+            Instruction32::S { imm, rs2, rs1, func3, opcode} =>
                 write!(f, "op: {}, fmt: S, imm: {:#06X}, rs2: {}, rs1: {}, func3: {}", opcode, imm, rs2, rs1, func3),
-            Instruction::SB { imm, rs2, rs1, func3, opcode} =>
+            Instruction32::SB { imm, rs2, rs1, func3, opcode} =>
                 write!(f, "op: {}, fmt: S, imm: {:#06X}, rs2: {}, rs1: {}, func3: {}", opcode, imm, rs2, rs1, func3),
-            Instruction::U { imm, rd, opcode} =>
+            Instruction32::U { imm, rd, opcode} =>
                 write!(f, "op: {}, fmt: U, imm: {:#010X}, rd : {}", opcode, imm, rd),
-            Instruction::UJ { imm, rd, opcode} =>
+            Instruction32::UJ { imm, rd, opcode} =>
                 write!(f, "op: {}, fmt: U, imm: {:#010X}, rd : {}", opcode, imm, rd),
         }
     }
@@ -62,5 +62,5 @@ impl fmt::Debug for Instruction {
 
 
 #[derive(PartialEq, Eq, Debug, Clone, Copy)]
-pub enum InstructionFmt { R, I, IC, IF, S, SB, U, UJ }
+pub enum Instruction32Fmt { R, I, IC, IF, S, SB, U, UJ }
 

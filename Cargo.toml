@@ -9,3 +9,10 @@ edition = "2018"
 [dependencies]
 structopt = "0.3"
 ux = "0.1"
+regex = "1.4"
+lazy_static = "1.4"
+proc-macro2 = "1.0"
+quote = "1.0"
+
+[lib]
+proc-macro = true
