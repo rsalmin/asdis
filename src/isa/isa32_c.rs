@@ -1,10 +1,21 @@
 use crate::primitives::*;
+use std::collections::HashMap;
 
+pub type ShowFun = fn(u32) -> String;
+pub type ShowDict = HashMap<String, ShowFun>;
 
 ///RV32C instructions subset
 #[derive(Debug)]
 pub struct ISARV32C {
     pub list : Vec<Instruction>,
+    pub show_dict : ShowDict,
+}
+
+
+///helper to show register
+fn show_register(v : u32) -> String
+{
+    format!("r{}", v)
 }
 
 impl ISARV32C {
@@ -13,7 +24,7 @@ impl ISARV32C {
         let list = vec! [
             riscv_dis::instruction!("c.addi4spn rd, imm", 000, imm[5:4|9:6|2|3], rd[2:0], 00),
             riscv_dis::instruction!("c.lw rd, rs1, imm", 010, imm[5:3], rs1[2:0], imm[2|6], rd[2:0], 00),
-            riscv_dis::instruction!("c.sw rs1, imm (rs2)", 110, imm[5:3], rs1[2:0], imm[2|6], rd[2:0], 00),
+            riscv_dis::instruction!("c.sw rs1, imm (rs2)", 110, imm[5:3], rs1[2:0], imm[2|6], rs2[2:0], 00),
             riscv_dis::instruction!("c.nop", 000, imm[5], 00000, imm[4:0], 01),
             riscv_dis::instruction!("c.addi rd, imm", 000, imm[5], rd[4:0], imm[4:0], 01),
             riscv_dis::instruction!("c.jal imm", 001, imm[11|4|9:8|10|6|7|3:1|5], 01),
@@ -43,7 +54,12 @@ impl ISARV32C {
             riscv_dis::instruction!("<illegal>", 0000000000000000),
        ];
 
-        ISARV32C { list }
+       let mut show_dict = HashMap::new();
+       show_dict.insert(String::from("rd"), show_register as ShowFun);
+       show_dict.insert(String::from("rs1"), show_register as ShowFun);
+       show_dict.insert(String::from("rs2"), show_register as ShowFun);
+
+        ISARV32C { list, show_dict }
     }
 }
 

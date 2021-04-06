@@ -4,7 +4,7 @@ use crate::isa::*;
 /// decode given word(u16) using instruction list, returns text description of instruction
 pub fn decode16(v : u16, isa : &ISARV32C) -> String {
     for i in &isa.list {
-        if let Some( s ) = try_instruction(v, &i)  {
+        if let Some( s ) = try_instruction(v, &i, &isa.show_dict)  {
             return s;
         }
     }
@@ -74,7 +74,7 @@ fn extract_idents( val : u16, instr : &BinaryInstruction) -> Vec<(String, u32, u
 
 /// try to find corespondence between given word and given instruction,
 /// if found return text description of instruction, otherwise None
-pub fn try_instruction( v : u16, i : &Instruction ) -> Option<String> {
+pub fn try_instruction( v : u16, i : &Instruction, show_dict : &ShowDict ) -> Option<String> {
     if !check16(v, &i.bin) {
         return None;
     }
@@ -85,12 +85,17 @@ pub fn try_instruction( v : u16, i : &Instruction ) -> Option<String> {
     for t in &i.text.list {
         match t {
             TextInstructionPart::Text( s ) => str = str + &s[..],
-            TextInstructionPart::TextIdent( s1, s2 ) => {
-                let attr = match vars.iter().find(|(n, _, _)| n == s2) {
-                    None => String::from("none"),
-                    Some((n_, v, s_)) => format!("{:#X}", *v),
+            TextInstructionPart::TextIdent( s1, ident ) => {
+                let attr = match vars.iter().find(|(n, _, _)| n == ident) {
+                    None => String::from("****"),
+                    Some((n_, v, s_)) => {
+                        match show_dict.get(ident) {
+                            None => format!("{:#X}", *v),
+                            Some( f ) => f(*v),
+                        }
+                    },
                 };
-                str = str + &s1[..] + &s2[..] + ":" + &attr[..];
+                str = str + &s1[..] + &attr[..];
             },
         }
     }
