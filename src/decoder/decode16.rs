@@ -15,9 +15,9 @@ pub fn decode16(v : u16, isa : &ISARV32C) -> String {
 
 /// checks if given value is encode given binary instruction
 /// (we can build mask and pattern in compile time in the future)
-fn check<T:Num>( v : T::T, instr : &BinaryInstruction::<T>) -> bool {
-    let mut mask  =  T::T::default();
-    let mut pattern  = T::T::default();
+fn check<T:Num>( v : T::IType, instr : &BinaryInstruction::<T>) -> bool {
+    let mut mask  =  T::zero();
+    let mut pattern  = T::zero();
     for item in &instr.list {
         match item {
             Item::Bits { len, val } => {

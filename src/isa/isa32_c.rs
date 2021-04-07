@@ -77,7 +77,7 @@ mod test {
 
     #[test]
     fn i1() {
-        let i1 = riscv_dis::instruction!("c.nop", 000, imm[5], 00000, imm[4:0], 01);
+        let i1 = riscv_dis::instruction16!("c.nop", 000, imm[5], 00000, imm[4:0], 01);
         let list = vec![ Item::Bits { len : 3, val : 0 },
                                  Item::Ident { name : String::from("imm"), bitspec : vec![5] },
                                  Item::Bits { len : 5, val : 0 },

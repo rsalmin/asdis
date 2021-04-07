@@ -9,24 +9,26 @@ use num_traits::int::PrimInt;
 
 
 pub trait Num {
-    type T : std::fmt::Binary + ToTokens  + PartialEq + Eq + fmt::Debug + PrimInt + Default;
-    fn from_str_radix(src: &str, radix: u32) -> Result<Self::T, ParseIntError>;
-    fn one() -> Self::T;
+    type IType : std::fmt::Binary + ToTokens  + fmt::Debug + PrimInt;
+    fn from_str_radix(src: &str, radix: u32) -> Result<Self::IType, ParseIntError>;
+    fn one() -> Self::IType;
+    fn zero() -> Self::IType;
 }
 
 impl Num for u16
 {
-    type T = u16;
-    fn from_str_radix(src: &str, radix: u32) -> Result<Self::T, ParseIntError> {
+    type IType = u16;
+    fn from_str_radix(src: &str, radix: u32) -> Result<Self::IType, ParseIntError> {
         u16::from_str_radix(src, radix)
     }
-    fn one() -> Self::T { 1 }
+    fn one() -> Self::IType { 1 }
+    fn zero() -> Self::IType { 0 }
 }
 
 /// Item represents part of binary encoded instruction, it is either just bits, or ident with bit sepcification
 #[derive(PartialEq, Eq, Debug)]
 pub enum Item<T : Num> {
-    Bits {len : usize, val : T::T},
+    Bits {len : usize, val : T::IType},
     Ident {name:String, bitspec:Vec<u8>},
 }
 
