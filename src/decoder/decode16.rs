@@ -1,5 +1,6 @@
 use crate::primitives::*;
 use crate::isa::*;
+use num_traits::PrimInt;
 
 /// decode given word(u16) using instruction list, returns text description of instruction
 pub fn decode16(v : u16, isa : &ISARV32C) -> String {
@@ -12,20 +13,20 @@ pub fn decode16(v : u16, isa : &ISARV32C) -> String {
 }
 
 
-/// checks if given word(u16) is encode given binary instruction
+/// checks if given value is encode given binary instruction
 /// (we can build mask and pattern in compile time in the future)
-fn check16( v : u16, instr : &BinaryInstruction) -> bool {
-    let mut mask : u16 = 0;
-    let mut pattern : u16 = 0;
+fn check<T:Num>( v : T::T, instr : &BinaryInstruction::<T>) -> bool {
+    let mut mask  =  T::T::default();
+    let mut pattern  = T::T::default();
     for item in &instr.list {
         match item {
             Item::Bits { len, val } => {
                 for i in 0..*len {
                     mask = mask << 1;
-                    mask = mask | 1;
+                    mask = mask | T::one();
                 }
                 pattern = pattern.rotate_left( *len as u32 );
-                pattern = pattern | val;
+                pattern = pattern | *val;
             },
             Item::Ident { name:_, bitspec } => {
                 let l = bitspec.len();
@@ -38,7 +39,7 @@ fn check16( v : u16, instr : &BinaryInstruction) -> bool {
 }
 
 /// extract from given instruction bit for idents and return tuples of (ident, val, start_bit)
-fn extract_idents( val : u16, instr : &BinaryInstruction) -> Vec<(String, u32, u8)> {
+fn extract_idents( val : u16, instr : &BinaryInstruction::<u16>) -> Vec<(String, u32, u8)> {
     let mut current_bit = 15_u16;
     let mut result = Vec::<(String, u32, u8)>::new();
 
@@ -74,8 +75,8 @@ fn extract_idents( val : u16, instr : &BinaryInstruction) -> Vec<(String, u32, u
 
 /// try to find corespondence between given word and given instruction,
 /// if found return text description of instruction, otherwise None
-pub fn try_instruction( v : u16, i : &Instruction, show_dict : &ShowDict ) -> Option<String> {
-    if !check16(v, &i.bin) {
+pub fn try_instruction( v : u16, i : &Instruction::<u16>, show_dict : &ShowDict ) -> Option<String> {
+    if !check::<u16>(v, &i.bin) {
         return None;
     }
 
