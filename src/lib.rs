@@ -162,11 +162,5 @@ fn parse_token_string(ts : TokenStream) -> Instruction {
 pub fn instruction(items: TokenStream) -> TokenStream {
     let r = parse_token_string(items);
     TokenStream::from( quote! { #r } )
-
-    //let mut rr = String::from("\"");
-    //rr.push_str(&r);
-    //rr.push_str("\"");
-    //rr.parse().unwrap()
-    //"10".parse().unwrap()
 }
 
