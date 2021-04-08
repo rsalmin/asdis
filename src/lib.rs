@@ -2,15 +2,15 @@ use proc_macro::{TokenStream, TokenTree, Delimiter};
 use quote::quote;
 
 mod primitives;
-use primitives::{Item, TextInstruction, BinaryInstruction, Instruction , Num, CompactType};
+use primitives::{Item, TextInstruction, BinaryInstruction, Instruction , Num, CompactType, RV32Type};
 use std::convert::From;
 
-fn bits_len<T:Num>( v : &Vec<Item<T>> ) -> usize {
-    let mut r : usize = 0;
+fn bits_len<T:Num>( v : &Vec<Item<T>> ) -> u32 {
+    let mut r : u32 = 0;
     for item in v {
         match item {
-            Item::Bits {len, .. } => r += len,
-            Item::Ident { name:_ , bitspec } => r += bitspec.len() ,
+            Item::Bits {len, .. } => r += *len as u32,
+            Item::Ident { name:_ , bitspec } => r += bitspec.len() as u32,
         };
     };
     r
@@ -151,7 +151,7 @@ fn parse_token_string<T:Num>(ts : TokenStream) -> Instruction<T> {
     }
 
     let bl = bits_len(&r);
-    assert_eq!(bl, 16);
+    assert_eq!(bl, T::i_max_bit() + 1);
 
     let bin = BinaryInstruction { list : r };
 
@@ -164,3 +164,8 @@ pub fn instruction16(items: TokenStream) -> TokenStream {
     TokenStream::from( quote! { #r } )
 }
 
+#[proc_macro]
+pub fn instruction32(items: TokenStream) -> TokenStream {
+    let r  = parse_token_string::<RV32Type>(items);
+    TokenStream::from( quote! { #r } )
+}
