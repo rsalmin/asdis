@@ -10,26 +10,41 @@ use num_traits::int::PrimInt;
 
 pub trait Num {
     type IType : std::fmt::Binary + ToTokens  + fmt::Debug + PrimInt;
+    type DType : PrimInt + std::fmt::UpperHex;
     fn from_str_radix(src: &str, radix: u32) -> Result<Self::IType, ParseIntError>;
-    fn one() -> Self::IType;
-    fn zero() -> Self::IType;
+    fn i_one() -> Self::IType;
+    fn i_zero() -> Self::IType;
+    fn i_max_bit() -> u32;
+    fn get_bit( v : Self::IType, bit : u32 ) -> Self::DType;
+    fn d_zero() -> Self::DType;
+    fn type_name() -> &'static str;
 }
 
-impl Num for u16
+#[derive(Debug, PartialEq, Eq)]
+pub struct CompactType {}
+
+impl Num for CompactType
 {
     type IType = u16;
+    type DType = u32;
     fn from_str_radix(src: &str, radix: u32) -> Result<Self::IType, ParseIntError> {
         u16::from_str_radix(src, radix)
     }
-    fn one() -> Self::IType { 1 }
-    fn zero() -> Self::IType { 0 }
+    fn i_one() -> Self::IType { 1 }
+    fn i_zero() -> Self::IType { 0 }
+    fn i_max_bit() -> u32 { 15 }
+    fn d_zero() -> Self::DType { 0 }
+    fn get_bit( v : Self::IType, bit : u32 ) -> Self::DType {
+        ( (v & (2.pow(bit) as u16)) >> bit ).into()
+    }
+    fn type_name() -> &'static str { "CompactType" }
 }
 
 /// Item represents part of binary encoded instruction, it is either just bits, or ident with bit sepcification
 #[derive(PartialEq, Eq, Debug)]
 pub enum Item<T : Num> {
     Bits {len : usize, val : T::IType},
-    Ident {name:String, bitspec:Vec<u8>},
+    Ident {name:String, bitspec:Vec<u32>},
 }
 
 impl<T : Num> fmt::Display for Item<T> {
@@ -61,7 +76,7 @@ impl<T:Num> ToTokens for Item<T> {
         tokens.append( TokenTree::Punct( Punct::new(':', Spacing::Joint) ) );
         tokens.append( TokenTree::Punct( Punct::new(':', Spacing::Joint) ) );
         tokens.append( TokenTree::Punct( Punct::new('<', Spacing::Joint) ) );
-        tokens.append( TokenTree::Ident( Ident::new(std::any::type_name::<T>(), Span::call_site())) );
+        tokens.append( TokenTree::Ident( Ident::new(T::type_name(), Span::call_site())) );
         tokens.append( TokenTree::Punct( Punct::new('>', Spacing::Joint) ) );
 
         tokens.append( TokenTree::Punct( Punct::new(':', Spacing::Joint) ) );
@@ -113,7 +128,7 @@ impl<T:Num> ToTokens for BinaryInstruction<T> {
         tokens.append( TokenTree::Punct( Punct::new(':', Spacing::Joint) ) );
         tokens.append( TokenTree::Punct( Punct::new(':', Spacing::Joint) ) );
         tokens.append( TokenTree::Punct( Punct::new('<', Spacing::Joint) ) );
-        tokens.append( TokenTree::Ident( Ident::new(std::any::type_name::<T>(), Span::call_site())) );
+        tokens.append( TokenTree::Ident( Ident::new(T::type_name(), Span::call_site())) );
         tokens.append( TokenTree::Punct( Punct::new('>', Spacing::Joint) ) );
 
         let mut inside_braces = TokenStream::new();
@@ -258,7 +273,7 @@ impl<T:Num> ToTokens for Instruction<T> {
         tokens.append( TokenTree::Punct( Punct::new(':', Spacing::Joint) ) );
         tokens.append( TokenTree::Punct( Punct::new(':', Spacing::Joint) ) );
         tokens.append( TokenTree::Punct( Punct::new('<', Spacing::Joint) ) );
-        tokens.append( TokenTree::Ident( Ident::new(std::any::type_name::<T>(), Span::call_site())) );
+        tokens.append( TokenTree::Ident( Ident::new(T::type_name(), Span::call_site())) );
         tokens.append( TokenTree::Punct( Punct::new('>', Spacing::Joint) ) );
 
         let mut inside_braces = TokenStream::new();

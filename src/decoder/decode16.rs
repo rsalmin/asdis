@@ -5,7 +5,7 @@ use num_traits::PrimInt;
 /// decode given word(u16) using instruction list, returns text description of instruction
 pub fn decode16(v : u16, isa : &ISARV32C) -> String {
     for i in &isa.list {
-        if let Some( s ) = try_instruction(v, &i, &isa.show_dict)  {
+        if let Some( s ) = try_instruction::<CompactType>(v, &i, &isa.show_dict)  {
             return s;
         }
     }
@@ -16,14 +16,14 @@ pub fn decode16(v : u16, isa : &ISARV32C) -> String {
 /// checks if given value is encode given binary instruction
 /// (we can build mask and pattern in compile time in the future)
 fn check<T:Num>( v : T::IType, instr : &BinaryInstruction::<T>) -> bool {
-    let mut mask  =  T::zero();
-    let mut pattern  = T::zero();
+    let mut mask  =  T::i_zero();
+    let mut pattern  = T::i_zero();
     for item in &instr.list {
         match item {
             Item::Bits { len, val } => {
                 for i in 0..*len {
                     mask = mask << 1;
-                    mask = mask | T::one();
+                    mask = mask | T::i_one();
                 }
                 pattern = pattern.rotate_left( *len as u32 );
                 pattern = pattern | *val;
@@ -39,14 +39,14 @@ fn check<T:Num>( v : T::IType, instr : &BinaryInstruction::<T>) -> bool {
 }
 
 /// extract from given instruction bit for idents and return tuples of (ident, val, start_bit)
-fn extract_idents( val : u16, instr : &BinaryInstruction::<u16>) -> Vec<(String, u32, u8)> {
-    let mut current_bit = 15_u16;
-    let mut result = Vec::<(String, u32, u8)>::new();
+fn extract_idents<T:Num>( val : T::IType, instr : &BinaryInstruction::<T>) -> Vec<(String, T::DType, u32)> {
+    let mut current_bit = T::i_max_bit();
+    let mut result = Vec::<(String, T::DType, u32)>::new();
 
     for item in &instr.list {
         match item {
             Item::Bits { len, val:_ } => {
-                let len = *len as u16;
+                let len = *len as u32;
                 if len > current_bit {
                     break;
                 }
@@ -55,12 +55,12 @@ fn extract_idents( val : u16, instr : &BinaryInstruction::<u16>) -> Vec<(String,
             Item::Ident { name, bitspec } => {
                 let l = bitspec.len();
                 let m = bitspec.iter().min().expect("Bitspec can't be empty!");
-                let mut v  = 0_u32;
+                let mut v : T::DType = T::d_zero();
                 for sbit in bitspec {
                      //take bit from current_bit and put bit to sbit bit
-                     let bit = (val & (2_u16.pow(current_bit.into()))) >> current_bit;
-                     let bit = (bit as u32) << sbit;
-                     v |= bit;
+                     let bit = T::get_bit(val, current_bit);
+                     let bit = bit  << (*sbit as usize);
+                     v = v | bit;
                      if current_bit == 0 {
                          break;
                      }
@@ -75,8 +75,8 @@ fn extract_idents( val : u16, instr : &BinaryInstruction::<u16>) -> Vec<(String,
 
 /// try to find corespondence between given word and given instruction,
 /// if found return text description of instruction, otherwise None
-pub fn try_instruction( v : u16, i : &Instruction::<u16>, show_dict : &ShowDict ) -> Option<String> {
-    if !check::<u16>(v, &i.bin) {
+pub fn try_instruction<T:Num>( v : T::IType, i : &Instruction::<T>, show_dict : &ShowDict::<T> ) -> Option<String> {
+    if !check::<T>(v, &i.bin) {
         return None;
     }
 
@@ -110,11 +110,11 @@ mod test {
     #[test]
     fn extract_id_1() {
         //c.jal
-        let list = vec![ Item::Bits { len : 3, val : 1 },
-                                 Item::Ident { name : String::from("imm"), bitspec : vec![11,4,9,8,10,6,7,3,2,1,5] },
-                                 Item::Bits { len : 2, val : 1 },
+        let list = vec![ Item::<CompactType>::Bits { len : 3, val : 1 },
+                                 Item::<CompactType>::Ident { name : String::from("imm"), bitspec : vec![11,4,9,8,10,6,7,3,2,1,5] },
+                                 Item::<CompactType>::Bits { len : 2, val : 1 },
                               ];
-        let jal_bin = BinaryInstruction { list };
+        let jal_bin = BinaryInstruction::<CompactType> { list };
         let instr = 0b0011010001101101_u16;
         let r = extract_idents( instr, &jal_bin);
         assert_eq!(r.len(), 1);

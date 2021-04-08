@@ -2,7 +2,7 @@ use proc_macro::{TokenStream, TokenTree, Delimiter};
 use quote::quote;
 
 mod primitives;
-use primitives::{Item, TextInstruction, BinaryInstruction, Instruction , Num};
+use primitives::{Item, TextInstruction, BinaryInstruction, Instruction , Num, CompactType};
 use std::convert::From;
 
 fn bits_len<T:Num>( v : &Vec<Item<T>> ) -> usize {
@@ -25,16 +25,16 @@ fn bits_len<T:Num>( v : &Vec<Item<T>> ) -> usize {
 //    }
 //}
 
-fn parse_bitspec(ts : TokenStream) -> Vec::<u8> {
+fn parse_bitspec(ts : TokenStream) -> Vec::<u32> {
 
     enum State {
         None,
-        Val( u8 ),
-        First( u8 ),
-        Pair(u8, u8),
+        Val( u32 ),
+        First( u32 ),
+        Pair(u32, u32),
     }
 
-    let mut bitspec  = Vec::<u8>::new();
+    let mut bitspec  = Vec::<u32>::new();
     let mut current = State::None;
 
     for tt in ts {
@@ -68,7 +68,7 @@ fn parse_bitspec(ts : TokenStream) -> Vec::<u8> {
                 }
             },
             TokenTree::Literal(g) => {
-                match g.to_string().parse::<u8>() {
+                match g.to_string().parse::<u32>() {
                     Ok( n ) => match current {
                         State::None => current = State::Val( n ),
                         State::First( a ) => current = State::Pair(a, n),
@@ -160,7 +160,7 @@ fn parse_token_string<T:Num>(ts : TokenStream) -> Instruction<T> {
 
 #[proc_macro]
 pub fn instruction16(items: TokenStream) -> TokenStream {
-    let r  = parse_token_string::<u16>(items);
+    let r  = parse_token_string::<CompactType>(items);
     TokenStream::from( quote! { #r } )
 }
 

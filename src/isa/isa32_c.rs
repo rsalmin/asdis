@@ -1,14 +1,14 @@
 use crate::primitives::*;
 use std::collections::HashMap;
 
-pub type ShowFun = fn(u32) -> String;
-pub type ShowDict = HashMap<String, ShowFun>;
+pub type ShowFun<T:Num> = fn(T::DType) -> String;
+pub type ShowDict<T:Num> = HashMap<String, ShowFun<T>>;
 
 ///RV32C instructions subset
 #[derive(Debug)]
 pub struct ISARV32C {
-    pub list : Vec<Instruction::<u16>>,
-    pub show_dict : ShowDict,
+    pub list : Vec<Instruction::<CompactType>>,
+    pub show_dict : ShowDict::<CompactType>,
 }
 
 
@@ -55,9 +55,9 @@ impl ISARV32C {
        ];
 
        let mut show_dict = HashMap::new();
-       show_dict.insert(String::from("rd"), show_register as ShowFun);
-       show_dict.insert(String::from("rs1"), show_register as ShowFun);
-       show_dict.insert(String::from("rs2"), show_register as ShowFun);
+       show_dict.insert(String::from("rd"), show_register as ShowFun::<CompactType>);
+       show_dict.insert(String::from("rs1"), show_register as ShowFun::<CompactType>);
+       show_dict.insert(String::from("rs2"), show_register as ShowFun::<CompactType>);
 
         ISARV32C { list, show_dict }
     }
