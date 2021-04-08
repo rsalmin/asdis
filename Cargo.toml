@@ -13,6 +13,7 @@ regex = "1.4"
 lazy_static = "1.4"
 proc-macro2 = "1.0"
 quote = "1.0"
+num-traits= "0.2"
 
 [lib]
 proc-macro = true

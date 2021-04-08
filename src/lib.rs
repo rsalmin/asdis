@@ -2,10 +2,10 @@ use proc_macro::{TokenStream, TokenTree, Delimiter};
 use quote::quote;
 
 mod primitives;
-use primitives::{Item, TextInstruction, BinaryInstruction, Instruction};
+use primitives::{Item, TextInstruction, BinaryInstruction, Instruction , Num, CompactType};
 use std::convert::From;
 
-fn bits_len( v : &Vec<Item> ) -> usize {
+fn bits_len<T:Num>( v : &Vec<Item<T>> ) -> usize {
     let mut r : usize = 0;
     for item in v {
         match item {
@@ -25,16 +25,16 @@ fn bits_len( v : &Vec<Item> ) -> usize {
 //    }
 //}
 
-fn parse_bitspec(ts : TokenStream) -> Vec::<u8> {
+fn parse_bitspec(ts : TokenStream) -> Vec::<u32> {
 
     enum State {
         None,
-        Val( u8 ),
-        First( u8 ),
-        Pair(u8, u8),
+        Val( u32 ),
+        First( u32 ),
+        Pair(u32, u32),
     }
 
-    let mut bitspec  = Vec::<u8>::new();
+    let mut bitspec  = Vec::<u32>::new();
     let mut current = State::None;
 
     for tt in ts {
@@ -68,7 +68,7 @@ fn parse_bitspec(ts : TokenStream) -> Vec::<u8> {
                 }
             },
             TokenTree::Literal(g) => {
-                match g.to_string().parse::<u8>() {
+                match g.to_string().parse::<u32>() {
                     Ok( n ) => match current {
                         State::None => current = State::Val( n ),
                         State::First( a ) => current = State::Pair(a, n),
@@ -94,7 +94,7 @@ fn parse_bitspec(ts : TokenStream) -> Vec::<u8> {
     return bitspec;
 }
 
-fn parse_token_string(ts : TokenStream) -> Instruction {
+fn parse_token_string<T:Num>(ts : TokenStream) -> Instruction<T> {
 
     enum State {
         Empty,
@@ -102,7 +102,7 @@ fn parse_token_string(ts : TokenStream) -> Instruction {
     }
 
     let mut current = State::Empty;
-    let mut r = Vec::<Item>::new();
+    let mut r = Vec::<Item<T>>::new();
 
     let mut iter = ts.into_iter();
 
@@ -142,9 +142,9 @@ fn parse_token_string(ts : TokenStream) -> Instruction {
             },
             TokenTree::Literal(g) => {
                 let str = &g.to_string();
-                match u16::from_str_radix(str, 2) {
+                match T::from_str_radix(str, 2) {
                     Err( err ) => panic!("Not a binary string : {}", err),
-                    Ok( val ) => r.push( Item::Bits { len : str.len(), val  } ),
+                    Ok( val ) => r.push( Item::Bits::<T> { len : str.len(), val  } ),
                 }
             },
         }
@@ -159,8 +159,8 @@ fn parse_token_string(ts : TokenStream) -> Instruction {
 }
 
 #[proc_macro]
-pub fn instruction(items: TokenStream) -> TokenStream {
-    let r = parse_token_string(items);
+pub fn instruction16(items: TokenStream) -> TokenStream {
+    let r  = parse_token_string::<CompactType>(items);
     TokenStream::from( quote! { #r } )
 }
 

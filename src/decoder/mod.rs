@@ -1,6 +1,6 @@
 mod decode32;
-mod decode16;
+mod decode;
 
 pub use decode32::*;
-pub use decode16::*;
+pub use decode::decode;
 

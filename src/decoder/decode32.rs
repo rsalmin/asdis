@@ -1,6 +1,6 @@
 use crate::primitives::*;
 
-pub fn decode(fmt : &Instruction32Fmt, v : u32, op: &Opcode) -> Instruction32 {
+pub fn decode32(fmt : &Instruction32Fmt, v : u32, op: &Opcode) -> Instruction32 {
     match fmt{
         Instruction32Fmt::R => decode_r(v, op),
         Instruction32Fmt::I => decode_i(v, op),
