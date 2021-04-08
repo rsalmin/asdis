@@ -1,16 +1,8 @@
 use crate::primitives::*;
+use crate::isa::isa::*;
 use std::collections::HashMap;
 
-pub type ShowFun<T:Num> = fn(T::DType) -> String;
-pub type ShowDict<T:Num> = HashMap<String, ShowFun<T>>;
-
-///RV32C instructions subset
-#[derive(Debug)]
-pub struct ISARV32C {
-    pub list : Vec<Instruction::<CompactType>>,
-    pub show_dict : ShowDict::<CompactType>,
-}
-
+pub type ISARV32C = ISA<CompactType>;
 
 ///helper to show register
 fn show_register(v : u32) -> String

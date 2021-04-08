@@ -3,13 +3,13 @@ use crate::isa::*;
 use num_traits::PrimInt;
 
 /// decode given word(u16) using instruction list, returns text description of instruction
-pub fn decode16(v : u16, isa : &ISARV32C) -> String {
+pub fn decode<T:Num>(v : T::IType, isa : &ISA::<T>) -> String {
     for i in &isa.list {
-        if let Some( s ) = try_instruction::<CompactType>(v, &i, &isa.show_dict)  {
+        if let Some( s ) = try_instruction::<T>(v, &i, &isa.show_dict)  {
             return s;
         }
     }
-    String::from("c. Not Found!")
+    format!("{}. Not found!", T::type_name())
 }
 
 

@@ -8,7 +8,7 @@ use primitives::*;
 mod isa;
 use isa::{ISAHelper, ISARV32C};
 mod decoder;
-use decoder::{decode, decode16};
+use decoder::{decode32, decode};
 use std::num::ParseIntError;
 
 enum IData {
@@ -77,7 +77,7 @@ fn translate32(v : u32, isa : &ISAHelper) -> String {
     }
     let op = Opcode::new( ( v & 0x7F ) as u8 );
     match isa.op2fmt.get(&op) {
-        Some( ifmt ) => i2string( &decode( ifmt, v, &op ), isa),
+        Some( ifmt ) => i2string( &decode32( ifmt, v, &op ), isa),
         None => format!("(op = {})", op),
     }
 }
@@ -126,7 +126,7 @@ fn main() -> std::io::Result<()> {
                 start_addr += 4;
            },
            IData::Half ( v ) => {
-               let dscr = decode16(v, &isa16);
+               let dscr = decode(v, &isa16);
                println!("{:#010X} {:40}     {:#06X}", start_addr, dscr, v);
                start_addr += 2;
            },
