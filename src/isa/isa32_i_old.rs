@@ -155,7 +155,6 @@ impl ISAHelper {
                                  , opdataI!("fence", 0xF, 0)
                                  , opdataI!("fence.i", 0xF, 1)
                                  , opdataI!("addi", 0x13, 0)
-                                 , opdataI!("addi", 0x13, 0)
                                  , opdataI!("slli", 0x13, 1)
                                  , opdataI!("slti", 0x13, 2)
                                  , opdataI!("sltiu", 0x13, 3)

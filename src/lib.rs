@@ -151,7 +151,7 @@ fn parse_token_string<T:Num>(ts : TokenStream) -> Instruction<T> {
     }
 
     let bl = bits_len(&r);
-    assert_eq!(bl, T::i_max_bit() + 1);
+    assert_eq!(bl, T::i_max_bit() + 1, "Number of the bits in provided ISA and specified command must be equal!");
 
     let bin = BinaryInstruction { list : r };
 
