@@ -6,9 +6,9 @@ use std::io::prelude::*;
 mod primitives;
 use primitives::*;
 mod isa;
-use isa::{ISAHelper, ISARV32C, ISARV32IM};
+use isa::{ISARV32C, ISARV32IM};
 mod decoder;
-use decoder::{decode32, decode};
+use decoder::decode;
 use std::num::ParseIntError;
 
 enum IData {
@@ -70,44 +70,9 @@ struct Cli {
     start_addr : u32,
 }
 
-fn translate32(v : u32, isa : &ISAHelper) -> String {
-    //Note that all ones illegal at least for for RV32I, but may be not illegal for other extensions
-    if v as u16 == 0 || v == 0xFFFFFFFF {
-        return format!("<illegal>");
-    }
-    let op = Opcode::new( ( v & 0x7F ) as u8 );
-    match isa.op2fmt.get(&op) {
-        Some( ifmt ) => i2string( &decode32( ifmt, v, &op ), isa),
-        None => format!("(op = {})", op),
-    }
-}
-
-fn i2string(i : &Instruction32, isa: &ISAHelper) -> String {
-    let mn = isa.mnemonic( i );
-    match i {
-            Instruction32::R {func7:_, rs2, rs1, func3:_, rd, opcode:_} =>
-                format!("{:8} {}, {}, {}", mn, rd, rs1, rs2),
-            Instruction32::I { imm, rs1, func3:_, rd, opcode:_} =>
-                format!("{:8} {}, {}, {:#X}", mn, rd, rs1, imm),
-            Instruction32::IC { cst:_, rs1, func3:_, rd, opcode:_} =>
-                 format!("{:8} {}, {}", mn, rd, rs1),
-            Instruction32::IF { func7:_, imm, rs1, func3:_, rd, opcode:_} =>
-                 format!("{:8} {}, {}, {:#X}", mn, rd, rs1, imm),
-             Instruction32::S { imm, rs2, rs1, func3:_, opcode:_} =>
-                format!("{:8} {}, {}, {:#X}", mn, rs1, rs2, imm),
-            Instruction32::SB { imm, rs2, rs1, func3:_, opcode:_} =>
-                format!("{:8} {}, {}, {:#X}", mn, rs1, rs2, imm),
-            Instruction32::U { imm, rd, opcode:_} =>
-                format!("{:8} {}, {:#X}", mn, rd, imm),
-            Instruction32::UJ { imm, rd, opcode:_} =>
-                format!("{:8} {}, {:#X}", mn, rd, imm),
-        }
-}
-
 fn main() -> std::io::Result<()> {
     let args = Cli::from_args();
 
-    let isa = ISAHelper::new();
     let isa16 = ISARV32C::new();
     let isa32 = ISARV32IM::new();
 
