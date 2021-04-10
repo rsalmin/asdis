@@ -155,6 +155,17 @@ impl ISARV32IMA {
 
             //for RV64 repeat last 9 parck of 4 commands with suffix .d, with changed with param from 010 to 011
 
+            //Zifencei
+            riscv_dis::instruction32!("fence.i",00000000000000000000000000001111),
+
+            //Zicsr
+            riscv_dis::instruction32!("csrrw rd, csr, rs1",csr[11:0],rs1[4:0],001,rd[4:0],1110011),
+            riscv_dis::instruction32!("csrrs rd, csr, rs1",csr[11:0],rs1[4:0],010,rd[4:0],1110011),
+            riscv_dis::instruction32!("csrrc rd, csr, rs1",csr[11:0],rs1[4:0],011,rd[4:0],1110011),
+            riscv_dis::instruction32!("csrrwi rd, csr, imm",csr[11:0],imm[4:0],101,rd[4:0],1110011),
+            riscv_dis::instruction32!("csrrsi rd, csr, imm",csr[11:0],imm[4:0],110,rd[4:0],1110011),
+            riscv_dis::instruction32!("csrrci rd, csr, imm",csr[11:0],imm[4:0],111,rd[4:0],1110011),
+
             //MISC
             riscv_dis::instruction32!("<illegal.0>", 00000000000000000000000000000000),
             riscv_dis::instruction32!("<illegal.1>", 11111111111111111111111111111111),
