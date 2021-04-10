@@ -6,7 +6,7 @@ use std::io::prelude::*;
 mod primitives;
 use primitives::*;
 mod isa;
-use isa::{ISAHelper, ISARV32C, ISARV32I};
+use isa::{ISAHelper, ISARV32C, ISARV32IM};
 mod decoder;
 use decoder::{decode32, decode};
 use std::num::ParseIntError;
@@ -109,7 +109,7 @@ fn main() -> std::io::Result<()> {
 
     let isa = ISAHelper::new();
     let isa16 = ISARV32C::new();
-    let isa32 = ISARV32I::new();
+    let isa32 = ISARV32IM::new();
 
     let file = File::open(&args.file)?;
     let buf_reader = BufReader::new(file);

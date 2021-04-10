@@ -2,7 +2,7 @@ use crate::primitives::*;
 use crate::isa::isa::*;
 use std::collections::HashMap;
 
-pub type ISARV32I = ISA<RV32Type>;
+pub type ISARV32IM = ISA<RV32Type>;
 
 ///helper to show register
 fn show_register(v : u32) -> String
@@ -10,10 +10,11 @@ fn show_register(v : u32) -> String
     format!("r{}", v)
 }
 
-impl ISARV32I {
-    pub fn new() -> ISARV32I {
+impl ISARV32IM {
+    pub fn new() -> ISARV32IM {
 
         let list = vec! [
+            // RV32I
             riscv_dis::instruction32!("addi rd, rs1, imm", imm[11:0], rs1[4:0], 000 ,rd[4:0], 0010011),
             riscv_dis::instruction32!("andi rd, rs1, imm", imm[11:0], rs1[4:0], 111 ,rd[4:0], 0010011),
             riscv_dis::instruction32!("slti rd, rs1, imm", imm[11:0], rs1[4:0], 010 ,rd[4:0], 0010011),
@@ -70,6 +71,24 @@ impl ISARV32I {
             riscv_dis::instruction32!("ecall", 00000000000000000000000001110011),
             riscv_dis::instruction32!("ebreak", 00000000000100000000000001110011),
 
+            //RV32M
+            riscv_dis::instruction32!("mul rd, rs1, rs2", 0000001,rs2[4:0],rs1[4:0],000,rd[4:0], 0110011),
+            riscv_dis::instruction32!("mulh rd, rs1, rs2", 0000001,rs2[4:0],rs1[4:0],001,rd[4:0], 0110011),
+            riscv_dis::instruction32!("mulhsu rd, rs1, rs2", 0000001,rs2[4:0],rs1[4:0],010,rd[4:0], 0110011),
+            riscv_dis::instruction32!("mulhu rd, rs1, rs2", 0000001,rs2[4:0],rs1[4:0],011,rd[4:0], 0110011),
+            //RV64 riscv_dis::instruction32!("mulw rd, rs1, rs2", 0000001,rs2[4:0],rs1[4:0],000,rd[4:0], 0111011),
+
+            riscv_dis::instruction32!("div rd, rs1, rs2", 0000001,rs2[4:0],rs1[4:0],100,rd[4:0], 0110011),
+            riscv_dis::instruction32!("divu rd, rs1, rs2", 0000001,rs2[4:0],rs1[4:0],101,rd[4:0], 0110011),
+            riscv_dis::instruction32!("rem rd, rs1, rs2", 0000001,rs2[4:0],rs1[4:0],110,rd[4:0], 0110011),
+            riscv_dis::instruction32!("remu rd, rs1, rs2", 0000001,rs2[4:0],rs1[4:0],111,rd[4:0], 0110011),
+            //RV64 riscv_dis::instruction32!("divw rd, rs1, rs2", 0000001,rs2[4:0],rs1[4:0],100,rd[4:0], 0111011),
+            //RV64 riscv_dis::instruction32!("divuw rd, rs1, rs2", 0000001,rs2[4:0],rs1[4:0],101,rd[4:0], 0111011),
+            //RV64 riscv_dis::instruction32!("remw rd, rs1, rs2", 0000001,rs2[4:0],rs1[4:0],110,rd[4:0], 0111011),
+            //RV64 riscv_dis::instruction32!("remuw rd, rs1, rs2", 0000001,rs2[4:0],rs1[4:0],111,rd[4:0], 0111011),
+
+            //RV32A
+
             riscv_dis::instruction32!("<illegal>", 00000000000000000000000000000000),
        ];
 
@@ -78,7 +97,7 @@ impl ISARV32I {
        show_dict.insert(String::from("rs1"), show_register as ShowFun::<RV32Type>);
        show_dict.insert(String::from("rs2"), show_register as ShowFun::<RV32Type>);
 
-        ISARV32I { list, show_dict }
+        ISARV32IM { list, show_dict }
     }
 }
 
@@ -89,7 +108,7 @@ mod test {
 
     #[test]
     fn ok() {
-        let isa = ISARV32I::new();
+        let isa = ISARV32IM::new();
         println!("{:?}", isa);
         assert!(true);
     }
