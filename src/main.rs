@@ -6,7 +6,7 @@ use std::io::prelude::*;
 mod primitives;
 use primitives::*;
 mod isa;
-use isa::{ISAHelper, ISARV32C};
+use isa::{ISAHelper, ISARV32C, ISARV32I};
 mod decoder;
 use decoder::{decode32, decode};
 use std::num::ParseIntError;
@@ -109,6 +109,7 @@ fn main() -> std::io::Result<()> {
 
     let isa = ISAHelper::new();
     let isa16 = ISARV32C::new();
+    let isa32 = ISARV32I::new();
 
     let file = File::open(&args.file)?;
     let buf_reader = BufReader::new(file);
@@ -121,7 +122,7 @@ fn main() -> std::io::Result<()> {
         let i = i?;
         match i {
             IData::Word( v ) =>  {
-                let dscr = translate32(v, &isa);
+                let dscr = decode(v, &isa32); //translate32(v, &isa);
                 println!("{:#010X} {:40} {:#010X?}  ", start_addr, dscr, v);
                 start_addr += 4;
            },

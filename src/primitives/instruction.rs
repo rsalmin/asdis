@@ -55,7 +55,7 @@ impl Num for RV32Type
     fn i_max_bit() -> u32 { 31 }
     fn d_zero() -> Self::DType { 0 }
     fn get_bit( v : Self::IType, bit : u32 ) -> Self::DType {
-        ( (v & (2.pow(bit) as u32)) >> bit ).into()
+        ( (v & (2_u32.pow(bit) as u32)) >> bit ).into()
     }
     fn type_name() -> &'static str { "RV32Type" }
 }
