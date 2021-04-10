@@ -2,7 +2,7 @@ use crate::primitives::*;
 use crate::isa::isa::*;
 use std::collections::HashMap;
 
-pub type ISARV32IM = ISA<RV32Type>;
+pub type ISARV32IMA = ISA<RV32Type>;
 
 ///helper to show register
 fn show_register(v : u32) -> String
@@ -10,8 +10,8 @@ fn show_register(v : u32) -> String
     format!("r{}", v)
 }
 
-impl ISARV32IM {
-    pub fn new() -> ISARV32IM {
+impl ISARV32IMA {
+    pub fn new() -> ISARV32IMA {
 
         let list = vec! [
             // RV32I
@@ -88,7 +88,74 @@ impl ISARV32IM {
             //RV64 riscv_dis::instruction32!("remuw rd, rs1, rs2", 0000001,rs2[4:0],rs1[4:0],111,rd[4:0], 0111011),
 
             //RV32A
+            riscv_dis::instruction32!("lr.w rd, rs1", 00010,00,00000,rs1[4:0],010,rd[4:0], 0101111),
+            riscv_dis::instruction32!("lr.w.aq rd, rs1", 00010,10,00000,rs1[4:0],010,rd[4:0], 0101111),
+            riscv_dis::instruction32!("lr.w.rl rd, rs1", 00010,01,00000,rs1[4:0],010,rd[4:0], 0101111),
+            riscv_dis::instruction32!("lr.w.aq.rl rd, rs1", 00010,11,00000,rs1[4:0],010,rd[4:0], 0101111),
 
+            //RV64 riscv_dis::instruction32!("lr.d rd, rs1", 00010,00,00000,rs1[4:0],011,rd[4:0], 0101111),
+            //RV64 riscv_dis::instruction32!("lr.d.aq rd, rs1", 00010,10,00000,rs1[4:0],011,rd[4:0], 0101111),
+            //RV64 riscv_dis::instruction32!("lr.d.rl rd, rs1", 00010,01,00000,rs1[4:0],011,rd[4:0], 0101111),
+            //RV64 riscv_dis::instruction32!("lr.d.aq.rl rd, rs1", 00010,11,00000,rs1[4:0],011,rd[4:0], 0101111),
+
+            riscv_dis::instruction32!("sc.w rd, rs1 (rs2)", 00011,00,rs2[4:0],rs1[4:0],010,rd[4:0], 0101111),
+            riscv_dis::instruction32!("sc.w.aq rd, rs1 (rs2)", 00011,10,rs2[4:0],rs1[4:0],010,rd[4:0], 0101111),
+            riscv_dis::instruction32!("sc.w.rl rd, rs1 (rs2)", 00011,01,rs2[4:0],rs1[4:0],010,rd[4:0], 0101111),
+            riscv_dis::instruction32!("sc.w.aq.rl rd, rs1 (rs2)", 00011,11,rs2[4:0],rs1[4:0],010,rd[4:0], 0101111),
+
+            //RV64 riscv_dis::instruction32!("sc.d rd, rs1 (rs2)", 00011,00,rs2[4:0],rs1[4:0],011,rd[4:0], 0101111),
+            //RV64 riscv_dis::instruction32!("sc.d.aq rd, rs1 (rs2)", 00011,10,rs2[4:0],rs1[4:0],011,rd[4:0], 0101111),
+            //RV64 riscv_dis::instruction32!("sc.d.rl rd, rs1 (rs2)", 00011,01,rs2[4:0],rs1[4:0],011,rd[4:0], 0101111),
+            //RV64 riscv_dis::instruction32!("sc.d.aq.rl rd, rs1 (rs2)", 00011,11,rs2[4:0],rs1[4:0],011,rd[4:0], 0101111),
+
+            riscv_dis::instruction32!("amoswap.w rd, rs1, rs2", 00001,00,rs2[4:0],rs1[4:0],010,rd[4:0], 0101111),
+            riscv_dis::instruction32!("amoswap.w.aq rd, rs1, rs2", 00001,10,rs2[4:0],rs1[4:0],010,rd[4:0], 0101111),
+            riscv_dis::instruction32!("amoswap.w.rl rd, rs1, rs2", 00001,01,rs2[4:0],rs1[4:0],010,rd[4:0], 0101111),
+            riscv_dis::instruction32!("amoswap.w.aq.rl rd, rs1, rs2", 00001,11,rs2[4:0],rs1[4:0],010,rd[4:0], 0101111),
+
+            riscv_dis::instruction32!("amoadd.w rd, rs1, rs2", 00000,00,rs2[4:0],rs1[4:0],010,rd[4:0], 0101111),
+            riscv_dis::instruction32!("amoadd.w.aq rd, rs1, rs2", 00000,10,rs2[4:0],rs1[4:0],010,rd[4:0], 0101111),
+            riscv_dis::instruction32!("amoadd.w.rl rd, rs1, rs2", 00000,01,rs2[4:0],rs1[4:0],010,rd[4:0], 0101111),
+            riscv_dis::instruction32!("amoadd.w.aq.rl rd, rs1, rs2", 00000,11,rs2[4:0],rs1[4:0],010,rd[4:0], 0101111),
+
+            riscv_dis::instruction32!("amoand.w rd, rs1, rs2", 01100,00,rs2[4:0],rs1[4:0],010,rd[4:0], 0101111),
+            riscv_dis::instruction32!("amoand.w.aq rd, rs1, rs2", 01100,10,rs2[4:0],rs1[4:0],010,rd[4:0], 0101111),
+            riscv_dis::instruction32!("amoand.w.rl rd, rs1, rs2", 01100,01,rs2[4:0],rs1[4:0],010,rd[4:0], 0101111),
+            riscv_dis::instruction32!("amoand.w.aq.rl rd, rs1, rs2", 01100,11,rs2[4:0],rs1[4:0],010,rd[4:0], 0101111),
+
+            riscv_dis::instruction32!("amoor.w rd, rs1, rs2", 01000,00,rs2[4:0],rs1[4:0],010,rd[4:0], 0101111),
+            riscv_dis::instruction32!("amoor.w.aq rd, rs1, rs2", 01000,10,rs2[4:0],rs1[4:0],010,rd[4:0], 0101111),
+            riscv_dis::instruction32!("amoor.w.rl rd, rs1, rs2", 01000,01,rs2[4:0],rs1[4:0],010,rd[4:0], 0101111),
+            riscv_dis::instruction32!("amoor.w.aq.rl rd, rs1, rs2", 01000,11,rs2[4:0],rs1[4:0],010,rd[4:0], 0101111),
+
+            riscv_dis::instruction32!("amoxor.w rd, rs1, rs2", 00100,00,rs2[4:0],rs1[4:0],010,rd[4:0], 0101111),
+            riscv_dis::instruction32!("amoxor.w.aq rd, rs1, rs2", 00100,10,rs2[4:0],rs1[4:0],010,rd[4:0], 0101111),
+            riscv_dis::instruction32!("amoxor.w.rl rd, rs1, rs2", 00100,01,rs2[4:0],rs1[4:0],010,rd[4:0], 0101111),
+            riscv_dis::instruction32!("amoxor.w.aq.rl rd, rs1, rs2", 00100,11,rs2[4:0],rs1[4:0],010,rd[4:0], 0101111),
+
+            riscv_dis::instruction32!("amomax.w rd, rs1, rs2", 10100,00,rs2[4:0],rs1[4:0],010,rd[4:0], 0101111),
+            riscv_dis::instruction32!("amomax.w.aq rd, rs1, rs2", 10100,10,rs2[4:0],rs1[4:0],010,rd[4:0], 0101111),
+            riscv_dis::instruction32!("amomax.w.rl rd, rs1, rs2", 10100,01,rs2[4:0],rs1[4:0],010,rd[4:0], 0101111),
+            riscv_dis::instruction32!("amomax.w.aq.rl rd, rs1, rs2", 10100,11,rs2[4:0],rs1[4:0],010,rd[4:0], 0101111),
+
+            riscv_dis::instruction32!("amomaxu.w rd, rs1, rs2", 11100,00,rs2[4:0],rs1[4:0],010,rd[4:0], 0101111),
+            riscv_dis::instruction32!("amomaxu.w.aq rd, rs1, rs2", 11100,10,rs2[4:0],rs1[4:0],010,rd[4:0], 0101111),
+            riscv_dis::instruction32!("amomaxu.w.rl rd, rs1, rs2", 11100,01,rs2[4:0],rs1[4:0],010,rd[4:0], 0101111),
+            riscv_dis::instruction32!("amomaxu.w.aq.rl rd, rs1, rs2", 11100,11,rs2[4:0],rs1[4:0],010,rd[4:0], 0101111),
+
+            riscv_dis::instruction32!("amomin.w rd, rs1, rs2", 10000,00,rs2[4:0],rs1[4:0],010,rd[4:0], 0101111),
+            riscv_dis::instruction32!("amomin.w.aq rd, rs1, rs2", 10000,10,rs2[4:0],rs1[4:0],010,rd[4:0], 0101111),
+            riscv_dis::instruction32!("amomin.w.rl rd, rs1, rs2", 10000,01,rs2[4:0],rs1[4:0],010,rd[4:0], 0101111),
+            riscv_dis::instruction32!("amomin.w.aq.rl rd, rs1, rs2", 10000,11,rs2[4:0],rs1[4:0],010,rd[4:0], 0101111),
+
+            riscv_dis::instruction32!("amominu.w rd, rs1, rs2", 11000,00,rs2[4:0],rs1[4:0],010,rd[4:0], 0101111),
+            riscv_dis::instruction32!("amominu.w.aq rd, rs1, rs2", 11000,10,rs2[4:0],rs1[4:0],010,rd[4:0], 0101111),
+            riscv_dis::instruction32!("amominu.w.rl rd, rs1, rs2", 11000,01,rs2[4:0],rs1[4:0],010,rd[4:0], 0101111),
+            riscv_dis::instruction32!("amominu.w.aq.rl rd, rs1, rs2", 11000,11,rs2[4:0],rs1[4:0],010,rd[4:0], 0101111),
+
+            //for RV64 repeat last 9 parck of 4 commands with suffix .d, with changed with param from 010 to 011
+
+            //MISC
             riscv_dis::instruction32!("<illegal.0>", 00000000000000000000000000000000),
             riscv_dis::instruction32!("<illegal.1>", 11111111111111111111111111111111),
        ];
@@ -98,7 +165,7 @@ impl ISARV32IM {
        show_dict.insert(String::from("rs1"), show_register as ShowFun::<RV32Type>);
        show_dict.insert(String::from("rs2"), show_register as ShowFun::<RV32Type>);
 
-        ISARV32IM { list, show_dict }
+        ISARV32IMA { list, show_dict }
     }
 }
 
@@ -109,7 +176,7 @@ mod test {
 
     #[test]
     fn ok() {
-        let isa = ISARV32IM::new();
+        let isa = ISARV32IMA::new();
         println!("{:?}", isa);
         assert!(true);
     }
