@@ -1,227 +1,206 @@
-use std::collections::HashMap;
-use std::hash::Hash;
-use ux;
-
 use crate::primitives::*;
+use crate::isa::isa::*;
+use std::collections::HashMap;
 
-#[derive(PartialEq, Eq, Hash, Clone)]
-struct Instruction32Signature {
-    opcode: Opcode,
-    func3 : Option<Func3>,
-    func7 : Option<Func7>,
-    cst12 : Option<ux::u12>,
+pub type ISARV32IMA = ISA<RV32Type>;
+
+///helper to show register
+fn show_register(v : u32) -> String
+{
+    format!("r{}", v)
 }
 
-struct OpcodeData {
-    mnemonic : &'static str,
-    fmt : Instruction32Fmt,
-    signature : Instruction32Signature,
+impl ISARV32IMA {
+    pub fn new() -> ISARV32IMA {
+
+        let list = vec! [
+            // RV32I
+            riscv_dis::instruction32!("addi rd, rs1, imm", imm[11:0], rs1[4:0], 000 ,rd[4:0], 0010011),
+            riscv_dis::instruction32!("andi rd, rs1, imm", imm[11:0], rs1[4:0], 111 ,rd[4:0], 0010011),
+            riscv_dis::instruction32!("slti rd, rs1, imm", imm[11:0], rs1[4:0], 010 ,rd[4:0], 0010011),
+            riscv_dis::instruction32!("sltiu rd, rs1, imm", imm[11:0], rs1[4:0], 011 ,rd[4:0], 0010011),
+            riscv_dis::instruction32!("ori rd, rs1, imm", imm[11:0], rs1[4:0], 110 ,rd[4:0], 0010011),
+            riscv_dis::instruction32!("xori rd, rs1, imm", imm[11:0], rs1[4:0], 100 ,rd[4:0], 0010011),
+
+            riscv_dis::instruction32!("slli rd, rs1, imm", 0000000, imm[4:0], rs1[4:0], 001 ,rd[4:0], 0010011),
+            riscv_dis::instruction32!("srli rd, rs1, imm", 0000000, imm[4:0], rs1[4:0], 101 ,rd[4:0], 0010011),
+            riscv_dis::instruction32!("srai rd, rs1, imm", 0100000, imm[4:0], rs1[4:0], 101 ,rd[4:0], 0010011),
+
+            riscv_dis::instruction32!("lui rd, imm", imm[31:12], rd[4:0], 0110111),
+            riscv_dis::instruction32!("auipc rd, imm", imm[31:12], rd[4:0], 0010111),
+
+            riscv_dis::instruction32!("add rd, rs1, rs2", 0000000, rs2[4:0], rs1[4:0], 000 ,rd[4:0], 0110011),
+            riscv_dis::instruction32!("slt rd, rs1, rs2", 0000000, rs2[4:0], rs1[4:0], 010 ,rd[4:0], 0110011),
+            riscv_dis::instruction32!("sltu rd, rs1, rs2", 0000000, rs2[4:0], rs1[4:0], 011 ,rd[4:0], 0110011),
+            riscv_dis::instruction32!("and rd, rs1, rs2", 0000000, rs2[4:0], rs1[4:0], 111 ,rd[4:0], 0110011),
+            riscv_dis::instruction32!("or rd, rs1, rs2", 0000000, rs2[4:0], rs1[4:0], 110 ,rd[4:0], 0110011),
+            riscv_dis::instruction32!("xor rd, rs1, rs2", 0000000, rs2[4:0], rs1[4:0], 100 ,rd[4:0], 0110011),
+            riscv_dis::instruction32!("sll rd, rs1, rs2", 0000000, rs2[4:0], rs1[4:0], 001 ,rd[4:0], 0110011),
+            riscv_dis::instruction32!("srl rd, rs1, rs2", 0000000, rs2[4:0], rs1[4:0], 101 ,rd[4:0], 0110011),
+            riscv_dis::instruction32!("sub rd, rs1, rs2", 0100000, rs2[4:0], rs1[4:0], 000 ,rd[4:0], 0110011),
+            riscv_dis::instruction32!("sra rd, rs1, rs2", 0100000, rs2[4:0], rs1[4:0], 101 ,rd[4:0], 0110011),
+
+            riscv_dis::instruction32!("nop", 00000000000000000000000000010011),
+
+            riscv_dis::instruction32!("jal", imm[10|10:1|11|19:12] ,rd[4:0], 1101111),
+            riscv_dis::instruction32!("jalr", imm[11:0],rs1[4:0], 000, rd[4:0], 1100111),
+
+            riscv_dis::instruction32!("beq rs1, rs2, imm",imm[12|10:5],rs2[4:0],rs1[4:0],000,imm[11|4:1], 1100011),
+            riscv_dis::instruction32!("bne rs1, rs2, imm",imm[12|10:5],rs2[4:0],rs1[4:0],001,imm[11|4:1], 1100011),
+            riscv_dis::instruction32!("blt rs1, rs2, imm",imm[12|10:5],rs2[4:0],rs1[4:0],100,imm[11|4:1], 1100011),
+            riscv_dis::instruction32!("bltu rs1, rs2, imm",imm[12|10:5],rs2[4:0],rs1[4:0],110,imm[11|4:1], 1100011),
+            riscv_dis::instruction32!("bge rs1, rs2, imm",imm[12|10:5],rs2[4:0],rs1[4:0],101,imm[11|4:1], 1100011),
+            riscv_dis::instruction32!("bgeu rs1, rs2, imm",imm[12|10:5],rs2[4:0],rs1[4:0],111,imm[11|4:1], 1100011),
+
+            riscv_dis::instruction32!("lb rd, imm (rs1)", imm[11:0],rs1[4:0], 000 ,rd[4:0], 0000011),
+            riscv_dis::instruction32!("lh rd, imm (rs1)", imm[11:0],rs1[4:0], 001 ,rd[4:0], 0000011),
+            riscv_dis::instruction32!("lw rd, imm (rs1)", imm[11:0],rs1[4:0], 010 ,rd[4:0], 0000011),
+            riscv_dis::instruction32!("ld rd, imm (rs1)", imm[11:0],rs1[4:0], 011 ,rd[4:0], 0000011),
+            riscv_dis::instruction32!("lbu rd, imm (rs1)", imm[11:0],rs1[4:0], 100 ,rd[4:0], 0000011),
+            riscv_dis::instruction32!("lhu rd, imm (rs1)", imm[11:0],rs1[4:0], 101 ,rd[4:0], 0000011),
+            riscv_dis::instruction32!("lwu rd, imm (rs1)", imm[11:0],rs1[4:0], 110 ,rd[4:0], 0000011),
+
+            riscv_dis::instruction32!("sb rs2, imm (rs1)", imm[11:5],rs2[4:0],rs1[4:0],000,imm[4:0], 0100011),
+            riscv_dis::instruction32!("sh rs2, imm (rs1)", imm[11:5],rs2[4:0],rs1[4:0],001,imm[4:0], 0100011),
+            riscv_dis::instruction32!("sw rs2, imm (rs1)", imm[11:5],rs2[4:0],rs1[4:0],010,imm[4:0], 0100011),
+            riscv_dis::instruction32!("sd rs2, imm (rs1)", imm[11:5],rs2[4:0],rs1[4:0],011,imm[4:0], 0100011),
+
+            riscv_dis::instruction32!("fence.tso", 10000011001100000000000000001111),
+            riscv_dis::instruction32!("fence imm", imm[11:0],00000000000000001111),
+
+            riscv_dis::instruction32!("ecall", 00000000000000000000000001110011),
+            riscv_dis::instruction32!("ebreak", 00000000000100000000000001110011),
+
+            //RV32M
+            riscv_dis::instruction32!("mul rd, rs1, rs2", 0000001,rs2[4:0],rs1[4:0],000,rd[4:0], 0110011),
+            riscv_dis::instruction32!("mulh rd, rs1, rs2", 0000001,rs2[4:0],rs1[4:0],001,rd[4:0], 0110011),
+            riscv_dis::instruction32!("mulhsu rd, rs1, rs2", 0000001,rs2[4:0],rs1[4:0],010,rd[4:0], 0110011),
+            riscv_dis::instruction32!("mulhu rd, rs1, rs2", 0000001,rs2[4:0],rs1[4:0],011,rd[4:0], 0110011),
+            //RV64 riscv_dis::instruction32!("mulw rd, rs1, rs2", 0000001,rs2[4:0],rs1[4:0],000,rd[4:0], 0111011),
+
+            riscv_dis::instruction32!("div rd, rs1, rs2", 0000001,rs2[4:0],rs1[4:0],100,rd[4:0], 0110011),
+            riscv_dis::instruction32!("divu rd, rs1, rs2", 0000001,rs2[4:0],rs1[4:0],101,rd[4:0], 0110011),
+            riscv_dis::instruction32!("rem rd, rs1, rs2", 0000001,rs2[4:0],rs1[4:0],110,rd[4:0], 0110011),
+            riscv_dis::instruction32!("remu rd, rs1, rs2", 0000001,rs2[4:0],rs1[4:0],111,rd[4:0], 0110011),
+            //RV64 riscv_dis::instruction32!("divw rd, rs1, rs2", 0000001,rs2[4:0],rs1[4:0],100,rd[4:0], 0111011),
+            //RV64 riscv_dis::instruction32!("divuw rd, rs1, rs2", 0000001,rs2[4:0],rs1[4:0],101,rd[4:0], 0111011),
+            //RV64 riscv_dis::instruction32!("remw rd, rs1, rs2", 0000001,rs2[4:0],rs1[4:0],110,rd[4:0], 0111011),
+            //RV64 riscv_dis::instruction32!("remuw rd, rs1, rs2", 0000001,rs2[4:0],rs1[4:0],111,rd[4:0], 0111011),
+
+            //RV32A
+            riscv_dis::instruction32!("lr.w rd, rs1", 00010,00,00000,rs1[4:0],010,rd[4:0], 0101111),
+            riscv_dis::instruction32!("lr.w.aq rd, rs1", 00010,10,00000,rs1[4:0],010,rd[4:0], 0101111),
+            riscv_dis::instruction32!("lr.w.rl rd, rs1", 00010,01,00000,rs1[4:0],010,rd[4:0], 0101111),
+            riscv_dis::instruction32!("lr.w.aq.rl rd, rs1", 00010,11,00000,rs1[4:0],010,rd[4:0], 0101111),
+
+            //RV64 riscv_dis::instruction32!("lr.d rd, rs1", 00010,00,00000,rs1[4:0],011,rd[4:0], 0101111),
+            //RV64 riscv_dis::instruction32!("lr.d.aq rd, rs1", 00010,10,00000,rs1[4:0],011,rd[4:0], 0101111),
+            //RV64 riscv_dis::instruction32!("lr.d.rl rd, rs1", 00010,01,00000,rs1[4:0],011,rd[4:0], 0101111),
+            //RV64 riscv_dis::instruction32!("lr.d.aq.rl rd, rs1", 00010,11,00000,rs1[4:0],011,rd[4:0], 0101111),
+
+            riscv_dis::instruction32!("sc.w rd, rs1 (rs2)", 00011,00,rs2[4:0],rs1[4:0],010,rd[4:0], 0101111),
+            riscv_dis::instruction32!("sc.w.aq rd, rs1 (rs2)", 00011,10,rs2[4:0],rs1[4:0],010,rd[4:0], 0101111),
+            riscv_dis::instruction32!("sc.w.rl rd, rs1 (rs2)", 00011,01,rs2[4:0],rs1[4:0],010,rd[4:0], 0101111),
+            riscv_dis::instruction32!("sc.w.aq.rl rd, rs1 (rs2)", 00011,11,rs2[4:0],rs1[4:0],010,rd[4:0], 0101111),
+
+            //RV64 riscv_dis::instruction32!("sc.d rd, rs1 (rs2)", 00011,00,rs2[4:0],rs1[4:0],011,rd[4:0], 0101111),
+            //RV64 riscv_dis::instruction32!("sc.d.aq rd, rs1 (rs2)", 00011,10,rs2[4:0],rs1[4:0],011,rd[4:0], 0101111),
+            //RV64 riscv_dis::instruction32!("sc.d.rl rd, rs1 (rs2)", 00011,01,rs2[4:0],rs1[4:0],011,rd[4:0], 0101111),
+            //RV64 riscv_dis::instruction32!("sc.d.aq.rl rd, rs1 (rs2)", 00011,11,rs2[4:0],rs1[4:0],011,rd[4:0], 0101111),
+
+            riscv_dis::instruction32!("amoswap.w rd, rs1, rs2", 00001,00,rs2[4:0],rs1[4:0],010,rd[4:0], 0101111),
+            riscv_dis::instruction32!("amoswap.w.aq rd, rs1, rs2", 00001,10,rs2[4:0],rs1[4:0],010,rd[4:0], 0101111),
+            riscv_dis::instruction32!("amoswap.w.rl rd, rs1, rs2", 00001,01,rs2[4:0],rs1[4:0],010,rd[4:0], 0101111),
+            riscv_dis::instruction32!("amoswap.w.aq.rl rd, rs1, rs2", 00001,11,rs2[4:0],rs1[4:0],010,rd[4:0], 0101111),
+
+            riscv_dis::instruction32!("amoadd.w rd, rs1, rs2", 00000,00,rs2[4:0],rs1[4:0],010,rd[4:0], 0101111),
+            riscv_dis::instruction32!("amoadd.w.aq rd, rs1, rs2", 00000,10,rs2[4:0],rs1[4:0],010,rd[4:0], 0101111),
+            riscv_dis::instruction32!("amoadd.w.rl rd, rs1, rs2", 00000,01,rs2[4:0],rs1[4:0],010,rd[4:0], 0101111),
+            riscv_dis::instruction32!("amoadd.w.aq.rl rd, rs1, rs2", 00000,11,rs2[4:0],rs1[4:0],010,rd[4:0], 0101111),
+
+            riscv_dis::instruction32!("amoand.w rd, rs1, rs2", 01100,00,rs2[4:0],rs1[4:0],010,rd[4:0], 0101111),
+            riscv_dis::instruction32!("amoand.w.aq rd, rs1, rs2", 01100,10,rs2[4:0],rs1[4:0],010,rd[4:0], 0101111),
+            riscv_dis::instruction32!("amoand.w.rl rd, rs1, rs2", 01100,01,rs2[4:0],rs1[4:0],010,rd[4:0], 0101111),
+            riscv_dis::instruction32!("amoand.w.aq.rl rd, rs1, rs2", 01100,11,rs2[4:0],rs1[4:0],010,rd[4:0], 0101111),
+
+            riscv_dis::instruction32!("amoor.w rd, rs1, rs2", 01000,00,rs2[4:0],rs1[4:0],010,rd[4:0], 0101111),
+            riscv_dis::instruction32!("amoor.w.aq rd, rs1, rs2", 01000,10,rs2[4:0],rs1[4:0],010,rd[4:0], 0101111),
+            riscv_dis::instruction32!("amoor.w.rl rd, rs1, rs2", 01000,01,rs2[4:0],rs1[4:0],010,rd[4:0], 0101111),
+            riscv_dis::instruction32!("amoor.w.aq.rl rd, rs1, rs2", 01000,11,rs2[4:0],rs1[4:0],010,rd[4:0], 0101111),
+
+            riscv_dis::instruction32!("amoxor.w rd, rs1, rs2", 00100,00,rs2[4:0],rs1[4:0],010,rd[4:0], 0101111),
+            riscv_dis::instruction32!("amoxor.w.aq rd, rs1, rs2", 00100,10,rs2[4:0],rs1[4:0],010,rd[4:0], 0101111),
+            riscv_dis::instruction32!("amoxor.w.rl rd, rs1, rs2", 00100,01,rs2[4:0],rs1[4:0],010,rd[4:0], 0101111),
+            riscv_dis::instruction32!("amoxor.w.aq.rl rd, rs1, rs2", 00100,11,rs2[4:0],rs1[4:0],010,rd[4:0], 0101111),
+
+            riscv_dis::instruction32!("amomax.w rd, rs1, rs2", 10100,00,rs2[4:0],rs1[4:0],010,rd[4:0], 0101111),
+            riscv_dis::instruction32!("amomax.w.aq rd, rs1, rs2", 10100,10,rs2[4:0],rs1[4:0],010,rd[4:0], 0101111),
+            riscv_dis::instruction32!("amomax.w.rl rd, rs1, rs2", 10100,01,rs2[4:0],rs1[4:0],010,rd[4:0], 0101111),
+            riscv_dis::instruction32!("amomax.w.aq.rl rd, rs1, rs2", 10100,11,rs2[4:0],rs1[4:0],010,rd[4:0], 0101111),
+
+            riscv_dis::instruction32!("amomaxu.w rd, rs1, rs2", 11100,00,rs2[4:0],rs1[4:0],010,rd[4:0], 0101111),
+            riscv_dis::instruction32!("amomaxu.w.aq rd, rs1, rs2", 11100,10,rs2[4:0],rs1[4:0],010,rd[4:0], 0101111),
+            riscv_dis::instruction32!("amomaxu.w.rl rd, rs1, rs2", 11100,01,rs2[4:0],rs1[4:0],010,rd[4:0], 0101111),
+            riscv_dis::instruction32!("amomaxu.w.aq.rl rd, rs1, rs2", 11100,11,rs2[4:0],rs1[4:0],010,rd[4:0], 0101111),
+
+            riscv_dis::instruction32!("amomin.w rd, rs1, rs2", 10000,00,rs2[4:0],rs1[4:0],010,rd[4:0], 0101111),
+            riscv_dis::instruction32!("amomin.w.aq rd, rs1, rs2", 10000,10,rs2[4:0],rs1[4:0],010,rd[4:0], 0101111),
+            riscv_dis::instruction32!("amomin.w.rl rd, rs1, rs2", 10000,01,rs2[4:0],rs1[4:0],010,rd[4:0], 0101111),
+            riscv_dis::instruction32!("amomin.w.aq.rl rd, rs1, rs2", 10000,11,rs2[4:0],rs1[4:0],010,rd[4:0], 0101111),
+
+            riscv_dis::instruction32!("amominu.w rd, rs1, rs2", 11000,00,rs2[4:0],rs1[4:0],010,rd[4:0], 0101111),
+            riscv_dis::instruction32!("amominu.w.aq rd, rs1, rs2", 11000,10,rs2[4:0],rs1[4:0],010,rd[4:0], 0101111),
+            riscv_dis::instruction32!("amominu.w.rl rd, rs1, rs2", 11000,01,rs2[4:0],rs1[4:0],010,rd[4:0], 0101111),
+            riscv_dis::instruction32!("amominu.w.aq.rl rd, rs1, rs2", 11000,11,rs2[4:0],rs1[4:0],010,rd[4:0], 0101111),
+
+            //for RV64 repeat last 9 parck of 4 commands with suffix .d, with changed with param from 010 to 011
+
+            //Zifencei
+            riscv_dis::instruction32!("fence.i",00000000000000000000000000001111),
+
+            //Zicsr
+            riscv_dis::instruction32!("csrrw rd, csr, rs1",csr[11:0],rs1[4:0],001,rd[4:0],1110011),
+            riscv_dis::instruction32!("csrrs rd, csr, rs1",csr[11:0],rs1[4:0],010,rd[4:0],1110011),
+            riscv_dis::instruction32!("csrrc rd, csr, rs1",csr[11:0],rs1[4:0],011,rd[4:0],1110011),
+            riscv_dis::instruction32!("csrrwi rd, csr, imm",csr[11:0],imm[4:0],101,rd[4:0],1110011),
+            riscv_dis::instruction32!("csrrsi rd, csr, imm",csr[11:0],imm[4:0],110,rd[4:0],1110011),
+            riscv_dis::instruction32!("csrrci rd, csr, imm",csr[11:0],imm[4:0],111,rd[4:0],1110011),
+
+            //MISC
+            riscv_dis::instruction32!("<illegal.0>", 00000000000000000000000000000000),
+            riscv_dis::instruction32!("<illegal.1>", 11111111111111111111111111111111),
+       ];
+
+       let mut show_dict = HashMap::new();
+       show_dict.insert(String::from("rd"), show_register as ShowFun::<RV32Type>);
+       show_dict.insert(String::from("rs1"), show_register as ShowFun::<RV32Type>);
+       show_dict.insert(String::from("rs2"), show_register as ShowFun::<RV32Type>);
+
+        ISARV32IMA { list, show_dict }
+    }
 }
 
-pub struct ISAHelper {
-    opdata : Vec<OpcodeData>,
-    pub op2fmt : HashMap::<Opcode, Instruction32Fmt>,
-    signature2mnemonic : HashMap::<Instruction32Signature, &'static str>,
-}
 
-macro_rules! opdataR {
-    ($name:literal, $op:expr, $func3:literal, $func7:literal) => {
-        OpcodeData { mnemonic : $name
-                                , fmt : Instruction32Fmt::R
-                                , signature : Instruction32Signature {opcode : Opcode::new($op)
-                                                                                         , func3 : Some(Func3::new($func3))
-                                                                                         , func7 : Some(Func7::new($func7))
-                                                                                         , cst12 : None }
-                              }
-    };
-}
+#[cfg(test)]
+mod test {
+    use super::*;
 
-macro_rules! opdataI {
-    ($name:literal, $op:expr, $func3:expr) => {
-        OpcodeData { mnemonic : $name
-                                , fmt : Instruction32Fmt::I
-                                , signature : Instruction32Signature {opcode : Opcode::new($op)
-                                                                                         , func3 : Some(Func3::new($func3))
-                                                                                         , func7 : None
-                                                                                         , cst12 : None }
-                             }
-    };
-}
-
-macro_rules! opdataI_f {
-    ($name:literal, $op:expr, $func3:literal, $func7:literal) => {
-        OpcodeData { mnemonic : $name
-                                , fmt : Instruction32Fmt::IF
-                                , signature : Instruction32Signature {opcode : Opcode::new($op)
-                                                                                         , func3 : Some(Func3::new($func3))
-                                                                                         , func7 : Some(Func7::new($func7))
-                                                                                         , cst12 : None }
-                             }
-    };
-}
-
-macro_rules! opdataI_c {
-    ($name:literal, $op:expr, $func3:literal, $cst12:literal) => {
-        OpcodeData { mnemonic : $name
-                                , fmt : Instruction32Fmt::IC
-                                , signature : Instruction32Signature {opcode : Opcode::new($op)
-                                                                                         , func3 : Some(Func3::new($func3))
-                                                                                         , func7 : None
-                                                                                         , cst12 : Some(ux::u12::new($cst12)) }
-                             }
-    };
-}
-
-macro_rules! opdataS {
-    ($name:literal, $op:expr, $func3:literal) => {
-        OpcodeData { mnemonic : $name
-                                , fmt : Instruction32Fmt::S
-                                , signature : Instruction32Signature {opcode : Opcode::new($op)
-                                                                                         , func3 : Some(Func3::new($func3))
-                                                                                         , func7 : None
-                                                                                         , cst12 : None }
-                              }
-    };
-}
-
-macro_rules! opdataSB {
-    ($name:literal, $op:expr, $func3:expr) => {
-        OpcodeData { mnemonic : $name
-                                , fmt : Instruction32Fmt::SB
-                                , signature : Instruction32Signature {opcode : Opcode::new($op)
-                                                                                         , func3 : Some(Func3::new($func3))
-                                                                                         , func7 : None
-                                                                                         , cst12 : None }
-                              }
-    };
-}
-
-macro_rules! opdataU {
-    ($name:literal, $op:expr) => {
-        OpcodeData { mnemonic : $name
-                                , fmt : Instruction32Fmt::U
-                                , signature : Instruction32Signature {opcode : Opcode::new($op)
-                                                                                         , func3 : None
-                                                                                         , func7 : None
-                                                                                         , cst12 : None }
-                              }
-    };
-}
-
-macro_rules! opdataUJ {
-    ($name:literal, $op:expr) => {
-        OpcodeData { mnemonic : $name
-                                , fmt : Instruction32Fmt::UJ
-                                , signature : Instruction32Signature {opcode : Opcode::new($op)
-                                                                                         , func3 : None
-                                                                                         , func7 : None
-                                                                                         , cst12 : None }
-                             }
-    };
-}
-
-fn i2signature(i : &Instruction32) -> Instruction32Signature {
-        match i {
-            Instruction32::R {func7, rs2:_, rs1:_, func3, rd:_, opcode} =>
-                Instruction32Signature { opcode: *opcode, func3 : Some(*func3), func7 : Some(*func7), cst12 : None },
-            Instruction32::I { imm:_, rs1:_, func3, rd:_, opcode} =>
-                Instruction32Signature { opcode: *opcode, func3 : Some(*func3), func7 : None, cst12 : None },
-            Instruction32::IC { cst, rs1:_, func3, rd:_, opcode} =>
-                Instruction32Signature { opcode: *opcode, func3 : Some(*func3), func7 : None, cst12 : Some(*cst) },
-            Instruction32::IF { func7, imm:_, rs1:_, func3, rd:_, opcode} =>
-                Instruction32Signature { opcode: *opcode, func3 : Some(*func3), func7 : Some(*func7), cst12 : None },
-            Instruction32::S { imm:_, rs2:_, rs1:_, func3, opcode} =>
-                Instruction32Signature { opcode: *opcode, func3 : Some(*func3), func7 : None, cst12 : None },
-            Instruction32::SB { imm:_, rs2:_, rs1:_, func3, opcode} =>
-                Instruction32Signature { opcode: *opcode, func3 : Some(*func3), func7 : None, cst12 : None },
-            Instruction32::U { imm:_, rd:_, opcode} =>
-                Instruction32Signature { opcode: *opcode, func3 : None, func7 : None, cst12 : None },
-            Instruction32::UJ { imm:_, rd:_, opcode} =>
-                Instruction32Signature { opcode: *opcode, func3 : None, func7 : None, cst12 : None },
-        }
-}
-
-impl ISAHelper {
-    pub fn new() -> ISAHelper {
-        let system_op = 0x73;
-
-        let opdata = vec![ opdataI!("lb", 3, 0)
-                                 , opdataI!("lh", 3, 1)
-                                 , opdataI!("lw", 3, 2)
-                                 , opdataI!("ld", 3, 3)
-                                 , opdataI!("lbu", 3, 4)
-                                 , opdataI!("lhu", 3, 5)
-                                 , opdataI!("lwu", 3, 6)
-                                 , opdataI!("fence", 0xF, 0)
-                                 , opdataI!("fence.i", 0xF, 1)
-                                 , opdataI!("addi", 0x13, 0)
-                                 , opdataI!("addi", 0x13, 0)
-                                 , opdataI!("slli", 0x13, 1)
-                                 , opdataI!("slti", 0x13, 2)
-                                 , opdataI!("sltiu", 0x13, 3)
-                                 , opdataI!("xori", 0x13, 4)
-                                 , opdataI_f!("srli", 0x13, 5, 0)
-                                 , opdataI_f!("srai", 0x13, 5, 0x20)
-                                 , opdataI!("orii", 0x13, 6)
-                                 , opdataI!("andi", 0x13, 7)
-                                 , opdataU!("auipc", 0x17)
-                                 , opdataI!("addiw", 0x1B, 0)
-                                 , opdataI!("slliw", 0x1B, 1)
-                                 , opdataI_f!("srliw", 0x1B, 5, 0)
-                                 , opdataI_f!("sraiw", 0x1B, 5, 0x20)
-                                 , opdataS!("sb", 0x23, 0)
-                                 , opdataS!("sh", 0x23, 1)
-                                 , opdataS!("sw", 0x23, 2)
-                                 , opdataS!("sd", 0x23, 3)
-                                 , opdataR!("add", 0x33, 0, 0)
-                                 , opdataR!("sub", 0x33, 0, 0x20)
-                                 , opdataR!("sll", 0x33, 1, 0)
-                                 , opdataR!("slt", 0x33, 2, 0)
-                                 , opdataR!("sltu", 0x33, 3, 0)
-                                 , opdataR!("xor", 0x33, 4, 0)
-                                 , opdataR!("srl", 0x33, 5, 0)
-                                 , opdataR!("sra", 0x33, 5, 0x20)
-                                 , opdataR!("or", 0x33, 6, 0)
-                                 , opdataR!("and", 0x33, 7, 0)
-                                 , opdataU!("lui", 0x37)
-                                 , opdataR!("addw", 0x3B, 0, 0)
-                                 , opdataR!("subw", 0x3B, 0, 0x20)
-                                 , opdataR!("sllw", 0x3B, 1, 0)
-                                 , opdataR!("srlw", 0x3B, 5, 0)
-                                 , opdataR!("sraw", 0x3B, 5, 0x20)
-                                 , opdataSB!("beq", 0x63, 0)
-                                 , opdataSB!("bne", 0x63, 1)
-                                 , opdataSB!("blt", 0x63, 4)
-                                 , opdataSB!("bge", 0x63, 5)
-                                 , opdataSB!("bltu", 0x63, 6)
-                                 , opdataSB!("bgeu", 0x63, 7)
-                                 , opdataI!("jalr", 0x67, 0)
-                                 , opdataUJ!("jal", 0x6F)
-                                 , opdataI_c!("ecall", system_op, 0, 0)
-                                 , opdataI_c!("ebreak", system_op, 0, 1)
-                                 , opdataI!("CSRRW", system_op, 1)
-                                 , opdataI!("CSRRS", system_op, 2)
-                                 , opdataI!("CSRRC", system_op, 3)
-                                 , opdataI!("CSRRWI", system_op, 4)
-                                 , opdataI!("CSRRSI", system_op, 5)
-                                 , opdataI!("CSRRCI", system_op, 6)
-                                 ];
-
-        println!("ISA has {} instructions", opdata.len());
-        let mut op2fmt = HashMap::<Opcode, Instruction32Fmt>::new();
-        let mut signature2mnemonic = HashMap::<Instruction32Signature, &str>::new();
-        for elt in &opdata{
-            op2fmt.insert(elt.signature.opcode, elt.fmt);
-            signature2mnemonic.insert(elt.signature.clone(), elt.mnemonic);
-        }
-        ISAHelper {opdata, op2fmt, signature2mnemonic}
+    #[test]
+    fn ok() {
+        let isa = ISARV32IMA::new();
+        println!("{:?}", isa);
+        assert!(true);
     }
 
-    pub fn mnemonic(&self, i : &Instruction32) -> String {
-        let sign = i2signature(i);
-        match self.signature2mnemonic.get( &sign ) {
-            Some ( s ) => String::from(*s),
-            None => String::from("<unk>"),
-        }
+    #[test]
+    fn i1() {
+        let i1 = riscv_dis::instruction32!("nop", 00000000000000000000000000010011);
+
+        let list = vec![ Item::Bits { len : 32, val : 0x13 }];
+        let bin = BinaryInstruction { list };
+        let text = TextInstruction { list : vec![ TextInstructionPart::Text(String::from("nop")) ] };
+        assert_eq!(i1.text, text);
+        assert_eq!(i1.bin, bin);
     }
+
 }

@@ -2,7 +2,7 @@ use std::fmt;
 use std::convert::From;
 use regex::Regex;
 use lazy_static::lazy_static;
-use quote::{quote, ToTokens, TokenStreamExt};
+use quote::{ToTokens, TokenStreamExt};
 use proc_macro2::{TokenStream, TokenTree, Ident, Group, Delimiter, Span, Punct, Literal, Spacing};
 use std::num::ParseIntError;
 use num_traits::int::PrimInt;
@@ -23,6 +23,9 @@ pub trait Num {
 #[derive(Debug, PartialEq, Eq)]
 pub struct CompactType {}
 
+#[derive(Debug, PartialEq, Eq)]
+pub struct RV32Type {}
+
 impl Num for CompactType
 {
     type IType = u16;
@@ -38,6 +41,23 @@ impl Num for CompactType
         ( (v & (2.pow(bit) as u16)) >> bit ).into()
     }
     fn type_name() -> &'static str { "CompactType" }
+}
+
+impl Num for RV32Type
+{
+    type IType = u32;
+    type DType = u32;
+    fn from_str_radix(src: &str, radix: u32) -> Result<Self::IType, ParseIntError> {
+        u32::from_str_radix(src, radix)
+    }
+    fn i_one() -> Self::IType { 1 }
+    fn i_zero() -> Self::IType { 0 }
+    fn i_max_bit() -> u32 { 31 }
+    fn d_zero() -> Self::DType { 0 }
+    fn get_bit( v : Self::IType, bit : u32 ) -> Self::DType {
+        ( (v & (2_u32.pow(bit) as u32)) >> bit ).into()
+    }
+    fn type_name() -> &'static str { "RV32Type" }
 }
 
 /// Item represents part of binary encoded instruction, it is either just bits, or ident with bit sepcification

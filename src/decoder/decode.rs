@@ -21,7 +21,7 @@ fn check<T:Num>( v : T::IType, instr : &BinaryInstruction::<T>) -> bool {
     for item in &instr.list {
         match item {
             Item::Bits { len, val } => {
-                for i in 0..*len {
+                for _i in 0..*len {
                     mask = mask << 1;
                     mask = mask | T::i_one();
                 }
@@ -53,7 +53,6 @@ fn extract_idents<T:Num>( val : T::IType, instr : &BinaryInstruction::<T>) -> Ve
                 current_bit -= len;
             },
             Item::Ident { name, bitspec } => {
-                let l = bitspec.len();
                 let m = bitspec.iter().min().expect("Bitspec can't be empty!");
                 let mut v : T::DType = T::d_zero();
                 for sbit in bitspec {
@@ -89,7 +88,7 @@ pub fn try_instruction<T:Num>( v : T::IType, i : &Instruction::<T>, show_dict : 
             TextInstructionPart::TextIdent( s1, ident ) => {
                 let attr = match vars.iter().find(|(n, _, _)| n == ident) {
                     None => String::from("****"),
-                    Some((n_, v, s_)) => {
+                    Some((_n, v, _s)) => {
                         match show_dict.get(ident) {
                             None => format!("{:#X}", *v),
                             Some( f ) => f(*v),
