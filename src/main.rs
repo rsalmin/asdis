@@ -4,7 +4,6 @@ use std::io::BufReader;
 use std::io::prelude::*;
 
 mod primitives;
-use primitives::*;
 mod isa;
 use isa::{ISARV32C, ISARV32IM};
 mod decoder;

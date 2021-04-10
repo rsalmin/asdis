@@ -1,7 +1,7 @@
 use crate::primitives::*;
 use std::collections::HashMap;
 
-pub type ShowFun<T:Num> = fn(T::DType) -> String;
+pub type ShowFun<T> = fn(<T as Num>::DType) -> String;
 pub type ShowDict<T> = HashMap<String, ShowFun<T>>;
 
 ///RV32C instructions subset

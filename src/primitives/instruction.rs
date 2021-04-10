@@ -2,7 +2,7 @@ use std::fmt;
 use std::convert::From;
 use regex::Regex;
 use lazy_static::lazy_static;
-use quote::{quote, ToTokens, TokenStreamExt};
+use quote::{ToTokens, TokenStreamExt};
 use proc_macro2::{TokenStream, TokenTree, Ident, Group, Delimiter, Span, Punct, Literal, Spacing};
 use std::num::ParseIntError;
 use num_traits::int::PrimInt;
