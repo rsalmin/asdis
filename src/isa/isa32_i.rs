@@ -167,8 +167,8 @@ impl ISARV32IMA {
             riscv_dis::instruction32!("csrrci rd, csr, imm",csr[11:0],imm[4:0],111,rd[4:0],1110011),
 
             //MISC
-            riscv_dis::instruction32!("<illegal.0>", 00000000000000000000000000000000),
-            riscv_dis::instruction32!("<illegal.1>", 11111111111111111111111111111111),
+            riscv_dis::instruction32!("illegal.0", 00000000000000000000000000000000),
+            riscv_dis::instruction32!("illegal.1", 11111111111111111111111111111111),
        ];
 
        let mut show_dict = HashMap::new();
