@@ -155,7 +155,7 @@ fn parse_token_string<T:Num>(ts : TokenStream) -> Instruction<T> {
 
     let bin = BinaryInstruction { list : r };
 
-    Instruction { bin, text }
+    Instruction::<T>::new(bin, text)
 }
 
 #[proc_macro]
