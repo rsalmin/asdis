@@ -1,6 +1,5 @@
 use crate::primitives::*;
 use crate::isa::*;
-use num_traits::PrimInt;
 
 /// decode given word(u16) using instruction list, returns text description of instruction
 pub fn decode<T:Num>(v : T::IType, isa : &ISA::<T>) -> String {
@@ -10,32 +9,6 @@ pub fn decode<T:Num>(v : T::IType, isa : &ISA::<T>) -> String {
         }
     }
     format!("{}. Not found!", T::type_name())
-}
-
-
-/// checks if given value is encode given binary instruction
-/// (we can build mask and pattern in compile time in the future)
-fn check<T:Num>( v : T::IType, instr : &BinaryInstruction::<T>) -> bool {
-    let mut mask  =  T::i_zero();
-    let mut pattern  = T::i_zero();
-    for item in &instr.list {
-        match item {
-            Item::Bits { len, val } => {
-                for _i in 0..*len {
-                    mask = mask << 1;
-                    mask = mask | T::i_one();
-                }
-                pattern = pattern.rotate_left( *len as u32 );
-                pattern = pattern | *val;
-            },
-            Item::Ident { name:_, bitspec } => {
-                let l = bitspec.len();
-                mask = mask.rotate_left( l as u32);
-                pattern = pattern.rotate_left( l as u32);
-            }
-        }
-    }
-    v & mask == pattern
 }
 
 /// extract from given instruction bit for idents and return tuples of (ident, val, start_bit)
@@ -75,7 +48,7 @@ fn extract_idents<T:Num>( val : T::IType, instr : &BinaryInstruction::<T>) -> Ve
 /// try to find corespondence between given word and given instruction,
 /// if found return text description of instruction, otherwise None
 pub fn try_instruction<T:Num>( v : T::IType, i : &Instruction::<T>, show_dict : &ShowDict::<T> ) -> Option<String> {
-    if !check::<T>(v, &i.bin) {
+    if ! ( v & i.mask() == i.pattern() ) {
         return None;
     }
 

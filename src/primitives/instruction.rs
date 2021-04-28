@@ -316,6 +316,8 @@ impl<T:Num> Instruction<T> {
         let (mask, pattern) = mask_pattern(&bin);
         Instruction { bin, text, mask, pattern }
     }
+    pub fn mask(&self) -> T::IType { self.mask }
+    pub fn pattern(&self) -> T::IType { self.pattern }
 }
 
 impl<T:Num> ToTokens for Instruction<T> {
