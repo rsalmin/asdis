@@ -1,5 +1,5 @@
 [package]
-name = "riscv-dis"
+name = "asdis"
 version = "0.1.0"
 authors = ["Roman Salmin <Roman.Salmin@gmail.com>"]
 edition = "2018"
